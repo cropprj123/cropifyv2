@@ -10,9 +10,12 @@ from flask_cors import CORS
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import pandas as pd
+import cv2
 from sklearn.exceptions import InconsistentVersionWarning
 import pickle
 import warnings
+from googletrans import Translator
+from ultralytics import YOLO
 import json
 import requests
 
@@ -20,11 +23,12 @@ warnings.simplefilter("ignore", InconsistentVersionWarning)
 
 app = Flask(__name__)
 CORS(app)  
-
+translator = Translator()
 
 RF_model = joblib.load('crop.joblib')
 lg_model = joblib.load('logistic_regression_model.joblib')
 
+disease_model = YOLO('best.pt')  # Crop disease detection model
 # Load the dataset
 df = pd.read_csv('Crop_recommendation.csv')
 desired = pd.read_csv('Crop_NPK.csv')
@@ -32,6 +36,96 @@ crop_summary = pd.pivot_table(df, index=['label'], aggfunc='mean')
 
 with open('description.json', 'r') as file:
     fertilizer_dict = json.load(file)
+def translate_recursive(obj, dest='mr'):
+    if isinstance(obj, dict):
+        return {k: translate_recursive(v, dest) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [translate_recursive(item, dest) for item in obj]
+    elif isinstance(obj, str):
+        # Only translate meaningful strings
+        if len(obj) > 1 and not obj.isupper() and not obj.isdigit():
+            try:
+                return translator.translate(obj, dest=dest).text
+            except:
+                return obj
+    return obj
+@app.route('/translate', methods=['POST'])
+def translate_endpoint():
+    try:
+        data = request.json.get('text')
+        target_language = request.json.get('lang', 'en')
+        
+        # Parse JSON if it's a JSON string
+        try:
+            parsed_data = json.loads(data)
+        except:
+            parsed_data = data
+        
+        # Translate the data
+        translated_data = translate_recursive(parsed_data, dest=target_language)
+        
+        return jsonify({
+            'original_text': data,
+            'translated_text': json.dumps(translated_data)
+        }), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Load disease information
+with open('diseasedescription.json', 'r') as file:
+    disease_info = json.load(file)
+
+def get_disease_info(disease_name):
+    # Normalize the disease name for comparison
+    disease_name = disease_name.strip().lower()
+    for disease in disease_info:
+        if disease['name'].strip().lower() == disease_name:
+            return disease
+    return None
+
+@app.route('/detect_crop_disease', methods=['POST'])
+def detect_crop_disease():
+    try:
+        # Receive base64 encoded image or file upload
+        if 'image' in request.files:
+            # File upload method
+            file = request.files['image']
+            img_bytes = file.read()
+            nparr = np.frombuffer(img_bytes, np.uint8)
+            image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        elif request.json and 'image' in request.json:
+            # Base64 encoded image method
+            image_base64 = request.json.get('image')
+            image_bytes = base64.b64decode(image_base64)
+            nparr = np.frombuffer(image_bytes, np.uint8)
+            image = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        else:
+            return jsonify({'error': 'No image provided', 'message': 'No image uploaded'}), 400
+        
+        # Run inference (assuming disease_model is defined elsewhere)
+        results = disease_model.predict(source=image, conf=0.25)
+        
+        # Prepare response
+        disease_predictions = []
+        for result in results:
+            for box in result.boxes:
+                disease_class = disease_model.names[int(box.cls)]
+                confidence = box.conf.item()
+                disease_info = get_disease_info(disease_class)
+                disease_predictions.append({
+                    'disease': disease_class,
+                    'confidence': float(confidence),
+                    'info': disease_info
+                })
+        
+        return jsonify({
+            'predictions': disease_predictions,
+            'message': 'Crop disease detection completed'
+        }), 200
+    
+    except Exception as e:
+        return jsonify({'error': str(e), 'message': 'Crop disease detection failed'}), 500
+
 # Define the prediction endpoint
 @app.route('/predict_crop', methods=['POST'])
 def predict_crop():

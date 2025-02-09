@@ -1,12 +1,56 @@
 const express = require("express");
 const axios = require("axios");
 const cropController = require("./../controllers/cropController");
+const multer = require("multer");
+const fs = require("fs");
+const FormData = require("form-data");
 
+const translateMiddleware = require("./../controllers/translationController");
 const authController = require("./../controllers/authController");
 const router = express.Router();
-
+router.use(translateMiddleware);
 const FLASK_SERVER_URL = "http://127.0.0.1:5000/"; // Replace 'flask-server-url' with the actual URL of your Flask server
+const upload = multer(); // No destination specified
 
+router.post(
+  "/detect-crop-disease",
+  upload.single("image"),
+  async (req, res) => {
+    try {
+      // Check if file was uploaded
+      if (!req.file) {
+        return res.status(400).json({ error: "No image uploaded" });
+      }
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append("image", req.file.buffer, {
+        filename: req.file.originalname,
+        contentType: req.file.mimetype,
+      });
+
+      // Forward to Flask API
+      const response = await axios.post(
+        `${FLASK_SERVER_URL}/detect_crop_disease`,
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+          },
+        }
+      );
+
+      // Send predictions back to client
+      res.json(response.data);
+    } catch (error) {
+      console.error("Crop Disease Detection Error:", error);
+      res.status(500).json({
+        error: "Crop disease detection failed",
+        details: error.message,
+      });
+    }
+  }
+);
 // Define the route for predicting crops
 router.get("/predict", (req, res) => {
   // Extract input data from query parameters or request body
