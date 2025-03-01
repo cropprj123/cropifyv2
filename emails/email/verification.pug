@@ -1,0 +1,324 @@
+extends baseEmail
+
+block content
+  style.
+    .verification-container {
+      text-align: center;
+      padding: 50px;
+      background: linear-gradient(135deg, #f0f4f8 0%, #d9e2ec 100%);
+      border-radius: 25px;
+      margin: 30px 0;
+      box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .verification-container::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, #1abc9c, #16a085, #1abc9c);
+      animation: shimmer 3s infinite linear;
+    }
+
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .header-title {
+      font-size: 36px;
+      font-weight: 900;
+      color: #34495e;
+      margin-bottom: 40px;
+      position: relative;
+      display: inline-block;
+    }
+
+    .header-title::after {
+      content: '';
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 100px;
+      height: 5px;
+      background: linear-gradient(90deg, #1abc9c, #16a085);
+      border-radius: 3px;
+    }
+    
+    .verification-code-container {
+      background: linear-gradient(145deg, #ffffff, #f0f4f8);
+      padding: 40px;
+      border-radius: 20px;
+      box-shadow: 
+        0 12px 30px rgba(0,0,0,0.1),
+        inset 0 -5px 15px rgba(0,0,0,0.05);
+      position: relative;
+      margin: 50px 0;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .verification-code-container:hover {
+      transform: translateY(-5px);
+      box-shadow: 
+        0 15px 35px rgba(0,0,0,0.15),
+        inset 0 -5px 15px rgba(0,0,0,0.1);
+    }
+
+    .verification-code {
+      font-size: 48px;
+      letter-spacing: 14px;
+      color: #34495e;
+      background: linear-gradient(45deg, #1abc9c, #16a085);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      padding: 25px 50px;
+      border-radius: 20px;
+      margin: 30px 0;
+      display: inline-block;
+      font-weight: 900;
+      position: relative;
+      font-family: 'Courier New', monospace;
+      text-shadow: 0 0 10px rgba(26, 188, 156, 0.5);
+    }
+
+    .verification-code::before,
+    .verification-code::after {
+      content: '';
+      position: absolute;
+      top: -4px;
+      left: -4px;
+      right: -4px;
+      bottom: -4px;
+      border: 3px solid rgba(26, 188, 156, 0.5);
+      border-radius: 20px;
+      animation: pulse 2s infinite ease-in-out;
+    }
+
+    .verification-code::after {
+      animation: pulse 3s infinite ease-in-out reverse;
+    }
+
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+    
+    .product-card {
+      background: #ffffff;
+      border-radius: 25px;
+      padding: 30px;
+      margin: 40px 0;
+      display: flex;
+      align-items: center;
+      box-shadow: 
+        0 20px 40px rgba(0,0,0,0.1),
+        0 5px 15px rgba(0,0,0,0.05);
+      transform: translateY(0);
+      transition: transform 0.3s ease;
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px);
+    }
+    
+    .product-image {
+      width: 160px;
+      height: 160px;
+      border-radius: 20px;
+      object-fit: cover;
+      margin-right: 30px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+    
+    .product-info {
+      flex: 1;
+      text-align: left;
+    }
+    
+    .product-name {
+      font-size: 26px;
+      font-weight: 900;
+      color: #34495e;
+      margin-bottom: 20px;
+      background: linear-gradient(45deg, #1abc9c, #16a085);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    
+    .order-details {
+      background: #ffffff;
+      padding: 35px;
+      border-radius: 25px;
+      margin: 40px 0;
+      text-align: left;
+      box-shadow: 
+        0 20px 40px rgba(0,0,0,0.1),
+        0 5px 15px rgba(0,0,0,0.05);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .order-details::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(45deg, rgba(26, 188, 156, 0.05), rgba(22, 160, 133, 0.05));
+      z-index: 0;
+    }
+    
+    .order-details h3 {
+      color: #34495e;
+      margin-bottom: 30px;
+      border-bottom: 4px solid #e9ecef;
+      padding-bottom: 20px;
+      font-size: 26px;
+      font-weight: 900;
+      position: relative;
+    }
+
+    .order-details h3::after {
+      content: '';
+      position: absolute;
+      bottom: -4px;
+      left: 0;
+      width: 120px;
+      height: 4px;
+      background: linear-gradient(90deg, #1abc9c, #16a085);
+    }
+    
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 20px 0;
+      padding: 15px 0;
+      border-bottom: 1px solid #f1f3f5;
+      color: #34495e;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .detail-label {
+      font-weight: 800;
+      color: #34495e;
+      font-size: 18px;
+    }
+    
+    .detail-value {
+      color: #34495e;
+      font-weight: 700;
+      font-size: 18px;
+    }
+    
+    .important-note {
+      background: linear-gradient(135deg, #fff9db 0%, #fff3bf 100%);
+      color: #856404;
+      padding: 30px;
+      border-radius: 25px;
+      margin: 40px 0;
+      text-align: left;
+      border-left: 6px solid #ffd43b;
+      box-shadow: 
+        0 20px 40px rgba(0,0,0,0.1),
+        0 5px 15px rgba(0,0,0,0.05);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .important-note::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffd43b' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+      opacity: 0.5;
+    }
+    
+    .important-note h4 {
+      color: #856404;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      font-size: 22px;
+      font-weight: 900;
+      position: relative;
+      z-index: 1;
+    }
+    
+    .important-note h4 span {
+      margin-right: 15px;
+      font-size: 28px;
+    }
+    
+    .important-note p {
+      margin: 15px 0;
+      line-height: 1.8;
+      font-size: 18px;
+      position: relative;
+      z-index: 1;
+    }
+
+    .success-checkmark {
+      color: #1abc9c;
+      font-size: 56px;
+      margin-bottom: 30px;
+      animation: bounce 1.5s ease infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-12px); }
+    }
+
+  table.main(role='presentation' width='100%' cellpadding='0' cellspacing='0')
+    tr
+      td.wrapper
+        table(role='presentation' border='0' cellpadding='0' cellspacing='0' width='100%')
+          tr
+            td
+              .verification-container
+                .success-checkmark ✅
+                h1.header-title Order Verification Code
+                p Hi #{firstName},
+                p We're excited to confirm your order! Here's your verification code:
+                
+                .verification-code-container
+                  .verification-code #{verificationCode}
+                
+                .product-card
+                  img.product-image(src=`${booking.crop.image}`, alt=booking.crop.name)
+                  .product-info
+                    .product-name #{booking.crop.name}
+                    p Your order has been confirmed and is being processed with care.
+                
+                .order-details
+                  h3 Order Details
+                  .detail-row
+                    span.detail-label Order ID:
+                    span.detail-value #{booking._id}
+                  .detail-row
+                    span.detail-label Product:
+                    span.detail-value #{booking.crop.name}
+                  .detail-row
+                    span.detail-label Amount:
+                    span.detail-value ₹#{booking.price}
+                  .detail-row
+                    span.detail-label Date:
+                    span.detail-value #{new Date(booking.createdAt).toLocaleString()}
+                
+                .important-note
+                  h4
+                    span ⚠️
+                    | Security Instructions
+                  p Please keep this verification code safe and secure. You'll need to present this code when receiving your order.
+                  p This unique code is your proof of purchase and helps us ensure your products are delivered to the right person.
+                  p For your security, please do not share this code with anyone except our authorized delivery personnel. 
