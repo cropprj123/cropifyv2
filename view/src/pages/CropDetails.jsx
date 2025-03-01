@@ -57,7 +57,7 @@ const CropDetails = ({ cart, setCart }) => {
           setError("");
           const response = await axios.get(`/api/v1/crops/${params.id}`);
           // //console.log("response data ", response.data.data.data); // Handle the response as needed
-          //console.log("locations", response.data.data.data.storelocation);
+          console.log("locations", response.data.data.data.storelocation);
 
           //console.log("reviews ", response.data.data.data.ratings);
           setReviews(response.data.data.data.ratings);
@@ -159,17 +159,29 @@ const CropDetails = ({ cart, setCart }) => {
     handleBookEvent(); // Call handleBookEvent when the button is clicked
   };
 
+  // Define the data array for tabs
   const data = [
     {
       label: "Description",
-      value: "html",
-      desc: cropDetails.description,
+      value: "description",
+      desc: cropDetails.description || "No description available"
     },
     {
       label: "Usage",
-      value: "react",
-      desc: cropDetails.usage,
+      value: "usage",
+      desc: cropDetails.usage || "No usage information available"
     },
+    {
+      label: "Details",
+      value: "details",
+      desc: (
+        <div>
+          <p><strong>Type:</strong> {cropDetails.type}</p>
+          <p><strong>Subtype:</strong> {cropDetails.subtype}</p>
+          <p><strong>Quantity Available:</strong> {cropDetails.quantity}</p>
+        </div>
+      )
+    }
   ];
 
   //add to cart
@@ -492,9 +504,13 @@ const CropDetails = ({ cart, setCart }) => {
               The above Product is available at the stores below.
             </Typography>
             <div>
-              <MapWithStoreLocations
-                storeLocations={cropDetails.storelocation}
-              />
+              {cropDetails.storelocation && cropDetails.storelocation.length > 0 ? (
+                <MapWithStoreLocations
+                  storeLocations={cropDetails.storelocation}
+                />
+              ) : (
+                <p className="text-gray-500 text-center py-4">No store locations available for this product.</p>
+              )}
             </div>
           </div>
           {reviewError && (

@@ -114,10 +114,18 @@ exports.getCrop = catchAsync(async (req, res, next) => {
 exports.getsinglecrop = catchAsync(async (req, res, next) => {
   const doc = await Crop.findById(req.params.id)
     .populate("soldby", "name")
-    .populate("ratings");
+    .populate("ratings")
+    .populate("storelocation");
+
   if (!doc) {
-    return next(new AppError("No doc found with that id ", 404));
+    return next(new AppError("No crop found with that id", 404));
   }
+
+  // Ensure storelocation is always an array
+  if (!doc.storelocation) {
+    doc.storelocation = [];
+  }
+
   res.status(200).json({
     status: "success",
     data: {
