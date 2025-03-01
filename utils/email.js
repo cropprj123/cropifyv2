@@ -9,20 +9,21 @@ module.exports = class Email {
     this.firstName = user.name.split(" ")[0];
     //the url is ooming from the authcontroller
     this.url = url;
-    this.from = `PRUTHVIJ DESAI <${process.env.EMAIL_FROM}>`;
+    this.from = `PRUTHVIJ DESAI <${process.env.GMAIL_ADDRESS}>`;
   }
 
   newTransport() {
-    if (process.env.NODE_ENV === "production") {
-      return 1;
-    }
-
     return nodemailer.createTransport({
-      host: process.env.EMAIL_HOST,
-      port: process.env.EMAIL_PORT,
+      service: "gmail",
+      host: "smtp.gmail.com",
+      port: 587,
+      secure: false,
       auth: {
-        user: process.env.EMAIL_USERNAME,
-        pass: process.env.EMAIL_PASSWORD,
+        user: process.env.GMAIL_ADDRESS,
+        pass: process.env.GMAIL_APP_PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false,
       },
     });
   }
@@ -56,7 +57,7 @@ module.exports = class Email {
   }
 
   async sendWelcome() {
-    await this.send("welcome", "Welcome to the ARROW Family!");
+    await this.send("welcome", "Welcome to the Cropify Family!");
   }
 
   async sendPasswordReset() {
