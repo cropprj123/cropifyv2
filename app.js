@@ -10,6 +10,7 @@ const bookingRouter = require("./routes/bookingRoutes");
 const reviewRouter = require("./routes/reviewRoute");
 const StoreRouter = require("./routes/storeRoutes");
 const addtocartRouter = require("./routes/addtocartRoute");
+const chatRouter = require("./routes/chatRoute");
 const app = express();
 const cors = require("cors");
 
@@ -49,10 +50,12 @@ app.use(
 app.use("/api/v1/crops", cropRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/email", emailRouter);
+
 app.use("/api/v1/bookings", bookingRouter);
 app.use("/api/v1/reviews", reviewRouter);
 app.use("/api/v1/store", StoreRouter);
 app.use("/api/v1/cart", addtocartRouter);
+app.use("/api/v1/ai", chatRouter);
 app.all("*", (req, res, next) => {
   next(new AppError(`can't find the ${req.originalUrl} url`));
 });

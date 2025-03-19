@@ -43,6 +43,9 @@ import AdminDashboard from "./pages/AdminDashboard";
 import DeliveryManagement from './pages/DeliveryManagement';
 import DiseasePrediction from "./pages/Prediction/DiseasePrediction";
 import VideoDiseaseDetection from "./pages/Prediction/VideoDiseaseDetection";
+import Forecast from './pages/Forecast';
+import DiseaseChat from "./pages/DiseaseChat";
+import GeneralChat from "./pages/GeneralChat";
 
 function App() {
   const { userData } = useUserData();
@@ -105,6 +108,9 @@ function App() {
                 <Route path="/prediction" element={<PredictionLayout />}>
                   <Route path="disease" element={<DiseasePrediction cart={cart} setCart={setCart} />} />
                   <Route path="video" element={<VideoDiseaseDetection />} />
+                  <Route path="forecast" element={<Forecast />} />
+                  <Route path="disease-chat" element={<DiseaseChat />} />
+                  <Route path="general-chat" element={<GeneralChat />} />
                   <Route path="crop" element={<CropPrediction />} />
                   <Route path="advice" element={<AdvicePrediction />} />
                   <Route path="npk" element={<NpkChart />} />
