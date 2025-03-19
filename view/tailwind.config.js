@@ -16,6 +16,16 @@ export default {
         brightGreen: "#539165",
         lightText: "#959595",
       },
+      scrollbar: {
+        hide: {
+          /* For WebKit browsers */
+          "&::-webkit-scrollbar": {
+            display: "none",
+          },
+          /* For Firefox */
+          "scrollbar-width": "none",
+        },
+      },
     },
   },
   plugins: [],

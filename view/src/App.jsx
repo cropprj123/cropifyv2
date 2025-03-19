@@ -40,9 +40,10 @@ import NewAdminLayout from "./components/Layouts/NewAdminLayout";
 import ResetPasswordForm from "./components/Email/ResetPasswordForm";
 import BuySuccess from "./components/BuySuccess";
 import AdminDashboard from "./pages/AdminDashboard";
-import DeliveryManagement from './pages/DeliveryManagement';
+import DeliveryManagement from "./pages/DeliveryManagement";
 import DiseasePrediction from "./pages/Prediction/DiseasePrediction";
 import VideoDiseaseDetection from "./pages/Prediction/VideoDiseaseDetection";
+import Footer from "./components/Footer/Footer";
 
 function App() {
   const { userData } = useUserData();
@@ -103,7 +104,12 @@ function App() {
 
               {userData.status === "success" && (
                 <Route path="/prediction" element={<PredictionLayout />}>
-                  <Route path="disease" element={<DiseasePrediction cart={cart} setCart={setCart} />} />
+                  <Route
+                    path="disease"
+                    element={
+                      <DiseasePrediction cart={cart} setCart={setCart} />
+                    }
+                  />
                   <Route path="video" element={<VideoDiseaseDetection />} />
                   <Route path="crop" element={<CropPrediction />} />
                   <Route path="advice" element={<AdvicePrediction />} />
@@ -111,7 +117,9 @@ function App() {
                   <Route path="models" element={<ModelComparison />} />
                   <Route
                     path="fertilizer"
-                    element={<FertilizerPrediction cart={cart} setCart={setCart} />}
+                    element={
+                      <FertilizerPrediction cart={cart} setCart={setCart} />
+                    }
                   />
                 </Route>
               )}
@@ -126,14 +134,26 @@ function App() {
                       <Route path="createproduct" element={<CreateProduct />} />
                       <Route path="createstore" element={<CreateStore />} />
                       <Route path="editcrops" element={<EditCrops />} />
-                      <Route path="editcrops/:id" element={<EditCropDetails />} />
+                      <Route
+                        path="editcrops/:id"
+                        element={<EditCropDetails />}
+                      />
                       <Route path="bookingdata" element={<BookingData />} />
                       <Route path="mostpop" element={<MostPopular />} />
                       <Route path="settings" element={<AdminSettings />}>
-                        <Route path="usersSettings" element={<UsersContent />} />
-                        <Route path="cropsSettings" element={<CropsContent />} />
+                        <Route
+                          path="usersSettings"
+                          element={<UsersContent />}
+                        />
+                        <Route
+                          path="cropsSettings"
+                          element={<CropsContent />}
+                        />
                       </Route>
-                      <Route path="delivery-management" element={<DeliveryManagement />} />
+                      <Route
+                        path="delivery-management"
+                        element={<DeliveryManagement />}
+                      />
                     </>
                   )}
                 </Route>
@@ -143,6 +163,7 @@ function App() {
             </Routes>
           </main>
         </div>
+        <Footer />
       </BrowserRouter>
     </>
   );
