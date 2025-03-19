@@ -47,7 +47,7 @@ export default function NewProductCard(props) {
           ₹ {props.price}
         </Typography>
         <Typography level="body-sm">
-          (Only <b>{props.quantity}</b> left in stock!)
+          (Only <b>{Math.floor(props.quantity)}</b> left in stock!)
         </Typography>
       </CardContent>
       <CardOverflow>

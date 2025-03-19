@@ -33,7 +33,6 @@ import FertilizerPrediction from "./pages/Prediction/FertilizerPrediction";
 import ForgetPassword from "./pages/ForgetPassword";
 import { ForgetRedirectToLogin } from "./components/ForgetRedirectToLogin";
 import CreateStore from "./pages/CreateStore";
-import Footer from "./components/Footer/Footer";
 import Loader from "./assets/loading.gif";
 import "./App.css";
 import useUserData from "./components/userData";
@@ -42,6 +41,8 @@ import ResetPasswordForm from "./components/Email/ResetPasswordForm";
 import BuySuccess from "./components/BuySuccess";
 import AdminDashboard from "./pages/AdminDashboard";
 import DeliveryManagement from './pages/DeliveryManagement';
+import DiseasePrediction from "./pages/Prediction/DiseasePrediction";
+import VideoDiseaseDetection from "./pages/Prediction/VideoDiseaseDetection";
 
 function App() {
   const { userData } = useUserData();
@@ -58,86 +59,90 @@ function App() {
   return (
     <>
       <BrowserRouter>
-        {isLoading === true && (
-          <div className="loaderzz">
-            <img src={Loader} alt="reak" />
-          </div>
-        )}
-        <Navbar userData={userData} cart={cart} />
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/crops" element={<Crops />} />
-          <Route
-            path="/crops/:id"
-            element={<CropDetails cart={cart} setCart={setCart} />}
-          />
-          <Route path="/aboutus" element={<AboutUs />} />
-          <Route path="/ourstores" element={<AdminUsers />} />
-          <Route path="/try" element={<BuySuccess />} />
-
-          <Route
-            path="/cart"
-            element={<Cart cart={cart} setCart={setCart} />}
-          />
-
-          {userData.status === "success" ? (
-            <Route path="/logout" element={<Logout />} />
-          ) : (
-            <>
-              <Route path="/login" element={<Login />} />
-              <Route path="/signup" element={<Signup />} />
-              <Route path="/forgetPassword" element={<ForgetPassword />} />
-              <Route
-                path="/ForgetRedirectToLogin"
-                element={<ForgetRedirectToLogin />}
-              />
-              <Route
-                path="/resetPassword/:resetToken"
-                element={<ResetPasswordForm />}
-              />
-            </>
+        <div className="flex flex-col min-h-screen">
+          {isLoading === true && (
+            <div className="loaderzz">
+              <img src={Loader} alt="reak" />
+            </div>
           )}
-
-          {userData.status === "success" && (
-            <Route path="/prediction" element={<PredictionLayout />}>
-              <Route path="crop" element={<CropPrediction />} />
-              <Route path="advice" element={<AdvicePrediction />} />
-              <Route path="npk" element={<NpkChart />} />
-              <Route path="models" element={<ModelComparison />} />
+          <Navbar userData={userData} cart={cart} />
+          <main className="flex-grow">
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/crops" element={<Crops />} />
               <Route
-                path="fertilizer"
-                element={<FertilizerPrediction cart={cart} setCart={setCart} />}
+                path="/crops/:id"
+                element={<CropDetails cart={cart} setCart={setCart} />}
               />
-            </Route>
-          )}
+              <Route path="/aboutus" element={<AboutUs />} />
+              <Route path="/ourstores" element={<AdminUsers />} />
+              <Route path="/try" element={<BuySuccess />} />
 
-          {userData.status === "success" && (
-            <Route path="/profile" element={<NewAdminLayout />}>
-              <Route index element={<Profile userData={userData} />} />
-              <Route path="myorders" element={<MyOrders />} />
-              {userData.user && userData.user.role === "admin" && (
+              <Route
+                path="/cart"
+                element={<Cart cart={cart} setCart={setCart} />}
+              />
+
+              {userData.status === "success" ? (
+                <Route path="/logout" element={<Logout />} />
+              ) : (
                 <>
-                  <Route path="dashboard" element={<AdminDashboard />} />
-                  <Route path="createproduct" element={<CreateProduct />} />
-                  <Route path="createstore" element={<CreateStore />} />
-                  <Route path="editcrops" element={<EditCrops />} />
-                  <Route path="editcrops/:id" element={<EditCropDetails />} />
-                  <Route path="bookingdata" element={<BookingData />} />
-                  <Route path="mostpop" element={<MostPopular />} />
-                  <Route path="statistics" element={<Chart />} />
-                  <Route path="settings" element={<AdminSettings />}>
-                    <Route path="usersSettings" element={<UsersContent />} />
-                    <Route path="cropsSettings" element={<CropsContent />} />
-                  </Route>
-                  <Route path="delivery-management" element={<DeliveryManagement />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/forgetPassword" element={<ForgetPassword />} />
+                  <Route
+                    path="/ForgetRedirectToLogin"
+                    element={<ForgetRedirectToLogin />}
+                  />
+                  <Route
+                    path="/resetPassword/:resetToken"
+                    element={<ResetPasswordForm />}
+                  />
                 </>
               )}
-            </Route>
-          )}
 
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-        <Footer />
+              {userData.status === "success" && (
+                <Route path="/prediction" element={<PredictionLayout />}>
+                  <Route path="disease" element={<DiseasePrediction cart={cart} setCart={setCart} />} />
+                  <Route path="video" element={<VideoDiseaseDetection />} />
+                  <Route path="crop" element={<CropPrediction />} />
+                  <Route path="advice" element={<AdvicePrediction />} />
+                  <Route path="npk" element={<NpkChart />} />
+                  <Route path="models" element={<ModelComparison />} />
+                  <Route
+                    path="fertilizer"
+                    element={<FertilizerPrediction cart={cart} setCart={setCart} />}
+                  />
+                </Route>
+              )}
+
+              {userData.status === "success" && (
+                <Route path="/profile" element={<NewAdminLayout />}>
+                  <Route index element={<Profile userData={userData} />} />
+                  <Route path="myorders" element={<MyOrders />} />
+                  {userData.user && userData.user.role === "admin" && (
+                    <>
+                      <Route path="dashboard" element={<AdminDashboard />} />
+                      <Route path="createproduct" element={<CreateProduct />} />
+                      <Route path="createstore" element={<CreateStore />} />
+                      <Route path="editcrops" element={<EditCrops />} />
+                      <Route path="editcrops/:id" element={<EditCropDetails />} />
+                      <Route path="bookingdata" element={<BookingData />} />
+                      <Route path="mostpop" element={<MostPopular />} />
+                      <Route path="settings" element={<AdminSettings />}>
+                        <Route path="usersSettings" element={<UsersContent />} />
+                        <Route path="cropsSettings" element={<CropsContent />} />
+                      </Route>
+                      <Route path="delivery-management" element={<DeliveryManagement />} />
+                    </>
+                  )}
+                </Route>
+              )}
+
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </main>
+        </div>
       </BrowserRouter>
     </>
   );

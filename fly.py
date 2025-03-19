@@ -18,6 +18,8 @@ from googletrans import Translator
 from ultralytics import YOLO
 import json
 import requests
+import tempfile
+import os
 
 warnings.simplefilter("ignore", InconsistentVersionWarning) 
 
@@ -82,6 +84,76 @@ def get_disease_info(disease_name):
         if disease['name'].strip().lower() == disease_name:
             return disease
     return None
+
+
+@app.route('/detect_crop_disease_video', methods=['POST'])
+def detect_crop_disease_video():
+    try:
+        if 'video' not in request.files:
+            return jsonify({'error': 'No video provided', 'message': 'No video uploaded'}), 400
+        
+        video_file = request.files['video']
+        temp_video = tempfile.NamedTemporaryFile(delete=False, suffix='.mp4')
+        video_file.save(temp_video.name)
+        temp_video.close()
+
+        cap = cv2.VideoCapture(temp_video.name)
+        if not cap.isOpened():
+            return jsonify({'error': 'Failed to open video', 'message': 'Invalid video file'}), 400
+
+        unique_diseases = {}  # Track count, max confidence, and info
+        while cap.isOpened():
+            ret, frame = cap.read()
+            if not ret:
+                break
+
+            results = disease_model.predict(source=frame, conf=0.25)
+
+            for result in results:
+                for box in result.boxes:
+                    disease_class = disease_model.names[int(box.cls)]
+                    confidence = box.conf.item()
+                    disease_info = get_disease_info(disease_class)
+
+                    # Update count and max confidence
+                    if disease_class in unique_diseases:
+                        unique_diseases[disease_class]['count'] += 1
+                        if confidence > unique_diseases[disease_class]['max_confidence']:
+                            unique_diseases[disease_class]['max_confidence'] = confidence
+                    else:
+                        unique_diseases[disease_class] = {
+                            'count': 1,
+                            'max_confidence': confidence,
+                            'info': disease_info
+                        }
+
+        cap.release()
+        os.unlink(temp_video.name)
+
+        # Convert to list and sort by count (descending), then confidence (descending)
+        unique_predictions = [
+            {
+                'disease': disease,
+                'count': details['count'],
+                'confidence': details['max_confidence'],
+                'info': details['info']
+            }
+            for disease, details in unique_diseases.items()
+        ]
+
+        # Sort by most frequent, then by highest confidence
+        sorted_predictions = sorted(
+            unique_predictions,
+            key=lambda x: (-x['count'], -x['confidence'])
+        )
+
+        return jsonify({
+            'predictions': sorted_predictions,
+            'message': 'Crop disease detection from video completed'
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e), 'message': 'Crop disease detection from video failed'}), 500
 
 @app.route('/detect_crop_disease', methods=['POST'])
 def detect_crop_disease():

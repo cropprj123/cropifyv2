@@ -60,7 +60,7 @@ export default function MostPopular() {
 
   const handleDownloadExcel = async () => {
     try {
-      const response = await fetch("http://127.0.0.1:3000/api/v1/bookings/report");
+      const response = await fetch("/api/v1/bookings/report");
       const blob = await response.blob();
       const url = window.URL.createObjectURL(new Blob([blob]));
       const link = document.createElement("a");

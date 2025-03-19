@@ -172,7 +172,7 @@ const DetailsModal = ({ open, onClose, booking }) => {
                 <Typography level="h5" sx={{ mb: 2 }}>Product</Typography>
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   <Typography>Name: {booking.crop?.name}</Typography>
-                  <Typography>Seller: {booking.crop?.soldby?.name || 'N/A'}</Typography>
+                  {/* <Typography>Seller: {booking.crop?.soldby?.name || 'N/A'}</Typography> */}
                 </Box>
               </CardContent>
             </Card>
@@ -541,7 +541,7 @@ export default function DeliveryManagement() {
                     <Box>
                       <Typography level="body-sm">{booking.crop?.name || 'N/A'}</Typography>
                       <Typography level="body-xs" sx={{ color: 'text.secondary' }}>
-                        Seller: {booking.crop?.soldby?.name || 'N/A'}
+                        {/* Seller: {booking.crop?.soldby?.name || 'N/A'} */}
                       </Typography>
                     </Box>
                   </td>

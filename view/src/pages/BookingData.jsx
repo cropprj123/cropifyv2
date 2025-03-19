@@ -105,7 +105,7 @@ export default function BookingData() {
   const handleDownloadExcel = async () => {
     try {
       const response = await fetch(
-        "http://127.0.0.1:3000/api/v1/bookings/report"
+        "/api/v1/bookings/report"
       );
       const blob = await response.blob();
       const url = window.URL.createObjectURL(new Blob([blob]));
@@ -148,17 +148,9 @@ export default function BookingData() {
           {/* <h1>Recent transactions in the app</h1> */}
           <div className="flex flex-row gap-4">
             <Typography level="h3">Recent transactions in the app</Typography>
-            <div className="p-2 bg-black rounded-2xl">
-              <span className="text-1xl font-light tracking-tight text-white">
-                Total Revenue ₹ {revenue}
-              </span>
-            </div>
 
-            <div className="p-2 bg-black rounded-2xl">
-              <span className="text-1xl font-light tracking-tight text-white">
-                Total transactions {totalProd}
-              </span>
-            </div>
+
+
           </div>
         </div>
         <TableContainer component={Paper}>

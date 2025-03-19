@@ -3,28 +3,28 @@ import { Link } from "react-router-dom";
 function Footer() {
   return (
     <footer className="bg-slate-50 shadow-[0_3px_10px_rgb(0,0,0,0.2)] mt-auto w-full">
-      <div className="mx-auto max-w-7xl py-8 px-4 sm:px-6 md:flex md:items-center md:justify-between lg:px-8">
+      <div className="mx-auto w-full max-w-7xl py-6 px-4 sm:px-6 md:flex md:items-center md:justify-between lg:px-8">
         <nav
           className="-mx-5 -my-2 flex flex-wrap justify-center order-2"
           aria-label="Footer"
         >
-          <div className="px-5">
-            <Link to="" className="text-base text-black hover:text-gray-200">
+          <div className="px-5 py-2">
+            <Link to="" className="text-base text-black hover:text-gray-600 transition-colors">
               Terms of Service
             </Link>
           </div>
 
-          <div className="px-5">
+          <div className="px-5 py-2">
             <Link
               to="/aboutus"
-              className="text-base text-black hover:text-gray-200"
+              className="text-base text-black hover:text-gray-600 transition-colors"
             >
               About us
             </Link>
           </div>
         </nav>
-        <div className="mt-8 md:mb-8 flex justify-center space-x-6 md:order-3">
-          <a href="#" className="text-black hover:text-gray-200">
+        <div className="mt-4 md:mt-0 flex justify-center space-x-6 md:order-3">
+          <a href="#" className="text-black hover:text-gray-600 transition-colors">
             <span className="sr-only">Facebook</span>
             <svg
               className="h-6 w-6"
@@ -40,7 +40,7 @@ function Footer() {
             </svg>
           </a>
 
-          <a href="#" className="text-black hover:text-gray-200">
+          <a href="#" className="text-black hover:text-gray-600 transition-colors">
             <span className="sr-only">Twitter</span>
             <svg
               className="h-6 w-6"
@@ -52,7 +52,7 @@ function Footer() {
             </svg>
           </a>
 
-          <a href="#" className="text-black hover:text-gray-200">
+          <a href="#" className="text-black hover:text-gray-600 transition-colors">
             <span className="sr-only">GitHub</span>
             <svg
               className="h-6 w-6"
@@ -68,9 +68,9 @@ function Footer() {
             </svg>
           </a>
         </div>
-        <div className="mt-8 md:order-1 md:mt-0">
+        <div className="mt-4 md:mt-0 md:order-1">
           <p className="text-center text-base text-black">
-            &copy; Cropify.in India Goverment Licensed.
+            &copy; Cropify.in India Government Licensed.
           </p>
         </div>
       </div>

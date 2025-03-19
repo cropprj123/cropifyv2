@@ -127,9 +127,9 @@ export default function CropsContent() {
             Product Total Revenue and Number of Users Graph
           </Typography>
           <>
-            <Button variant="outlined" color="neutral" onClick={handleClick}>
+            {/* <Button variant="outlined" color="neutral" onClick={handleClick}>
               Get Pie Chart
-            </Button>
+            </Button> */}
             <Modal
               aria-labelledby="modal-title"
               aria-describedby="modal-desc"

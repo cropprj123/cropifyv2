@@ -4,12 +4,13 @@ const cropController = require("./../controllers/cropController");
 const multer = require("multer");
 const fs = require("fs");
 const FormData = require("form-data");
+const Crop = require("./../models/cropModel");
 
-const translateMiddleware = require("./../controllers/translationController");
+// const translateMiddleware = require("./../controllers/translationController");
 const authController = require("./../controllers/authController");
 const router = express.Router();
-router.use(translateMiddleware);
-const FLASK_SERVER_URL = "http://127.0.0.1:5000/"; // Replace 'flask-server-url' with the actual URL of your Flask server
+// router.use(translateMiddleware);
+const FLASK_SERVER_URL = "http://127.0.0.1:5000"; // Removed trailing slash
 const upload = multer(); // No destination specified
 
 router.post(
@@ -51,10 +52,55 @@ router.post(
     }
   }
 );
-// Define the route for predicting crops
+
+
+// Video disease detection route
+router.post(
+  "/detect-crop-disease-video",
+  upload.single("video"),
+  async (req, res) => {
+    try {
+      // Check if video was uploaded
+      if (!req.file) {
+        return res.status(400).json({ error: "No video uploaded" });
+      }
+
+      // Check if the file is a video
+      if (!req.file.mimetype.startsWith('video/')) {
+        return res.status(400).json({ error: "Uploaded file is not a video" });
+      }
+
+      // Create FormData
+      const formData = new FormData();
+      formData.append("video", req.file.buffer, {
+        filename: req.file.originalname,
+        contentType: req.file.mimetype,
+      });
+
+      // Forward to Flask API
+      const response = await axios.post(
+        `${FLASK_SERVER_URL}/detect_crop_disease_video`,
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+          },
+        }
+      );
+
+      // Send predictions back to client
+      res.json(response.data);
+    } catch (error) {
+      console.error("Video Disease Detection Error:", error);
+      res.status(500).json({
+        error: "Video disease detection failed",
+        details: error.message,
+      });
+    }
+  }
+);
+
 router.get("/predict", (req, res) => {
-  // Extract input data from query parameters or request body
-  // const inputData = req.query.data; // Assuming data for prediction is sent in the query string
   const inputData = req.query.data.map(parseFloat);
   // Make a POST request to the Flask server's prediction endpoint
   axios
@@ -149,7 +195,34 @@ router.get("/getratings", (req, res) => {
     });
 });
 
-router.get("/search", cropController.searchcrop);
+router.get("/search", async (req, res) => {
+  try {
+    const searchQuery = req.query.name;
+    
+    // Find crops where the name, type or description matches the search query
+    const crops = await Crop.find({
+      $or: [
+        { name: { $regex: searchQuery, $options: 'i' } },
+        { type: { $regex: searchQuery, $options: 'i' } },
+        { description: { $regex: searchQuery, $options: 'i' } }
+      ]
+    });
+
+    res.status(200).json({
+      status: 'success',
+      data: {
+        crop: crops
+      }
+    });
+  } catch (error) {
+    console.error('Search Error:', error);
+    res.status(500).json({
+      status: 'error',
+      message: 'Error searching for crops'
+    });
+  }
+});
+
 router
   .route("/")
   .post(

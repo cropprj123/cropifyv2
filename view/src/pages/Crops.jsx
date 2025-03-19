@@ -4,17 +4,24 @@ import ApiLoading from "../components/ApiLoading";
 import { Link } from "react-router-dom";
 import ErrorMessage from "../components/ErrorMessage";
 import NewProductCard from "../components/NewProductCard";
-import { Typography } from "@mui/joy";
+import { Typography, Slider, Chip } from "@mui/material";
 import ClearIcon from "@mui/icons-material/Clear";
+import SearchIcon from "@mui/icons-material/Search";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import TuneIcon from '@mui/icons-material/Tune';
 
 function Crops({ cart, setCart }) {
   const [crops, setCrops] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [search, setSearch] = useState("");
   const [error, setError] = useState(false);
-  const [newArray, setNewArray] = useState([]);
-  const [filter, setFilter] = useState("all");
-  const [selectedFilterLabel, setSelectedFilterLabel] = useState("");
+  const [filteredCrops, setFilteredCrops] = useState([]);
+  const [selectedTypes, setSelectedTypes] = useState([]);
+  const [priceRange, setPriceRange] = useState([0, 10000]);
+  const [sortBy, setSortBy] = useState("recently-added");
+  const [showFilters, setShowFilters] = useState(false);
+
+  const cropTypes = ["Fertilizer", "Seed", "Crop Protection"];
 
   useEffect(function () {
     async function getCrops() {
@@ -22,17 +29,18 @@ function Crops({ cart, setCart }) {
         setIsLoading(true);
         setError("");
         const response = await axios.get(`/api/v1/crops/`);
-        console.log("response ", response.data.data.data); // Handle the response as needed
-
         if (response.status !== 200)
-          throw new Error("Something went wrong with fetchintg crops");
+          throw new Error("Something went wrong with fetching crops");
 
         const cropsData = response.data.data.data;
         if (cropsData.length === 0) {
           throw new Error("No crops found");
         }
         setCrops(cropsData);
-
+        setFilteredCrops(cropsData);
+        // Set initial price range based on min and max prices
+        const prices = cropsData.map(crop => crop.price);
+        setPriceRange([Math.min(...prices), Math.max(...prices)]);
         setIsLoading(false);
       } catch (err) {
         setError(err.message);
@@ -43,206 +51,198 @@ function Crops({ cart, setCart }) {
     getCrops();
   }, []);
 
+  // Apply all filters and sorting
   useEffect(() => {
-    setNewArray([...crops]);
-  }, [crops]);
-
-  /*  const handleSortChange = (value) => {
-    let sortedArray = [...crops];
-    if (value === "price-high-to-low") {
-      sortedArray.sort((a, b) => b.price - a.price);
-    } else if (value === "price-low-to-high") {
-      sortedArray.sort((a, b) => a.price - b.price);
-    } else if (value === "recently-added") {
-      sortedArray.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
-    }
-    setNewArray(sortedArray);
-  }; */
-  const handleSortAndFilterChange = (sortValue, filterValue) => {
-    let sortedAndFilteredArray = [...crops];
-    // Sorting
-    if (sortValue === "price-high-to-low") {
-      sortedAndFilteredArray.sort((a, b) => b.price - a.price);
-    } else if (sortValue === "price-low-to-high") {
-      sortedAndFilteredArray.sort((a, b) => a.price - b.price);
-    } else if (sortValue === "recently-added") {
-      sortedAndFilteredArray.sort(
-        (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
+    let result = [...crops];
+    
+    // Apply search filter
+    if (search) {
+      result = result.filter(crop => 
+        crop.name.toLowerCase().includes(search.toLowerCase()) ||
+        crop.type.toLowerCase().includes(search.toLowerCase())
       );
     }
-    // Filtering
-    if (filterValue !== "all") {
-      sortedAndFilteredArray = sortedAndFilteredArray.filter(
-        (crop) => crop.type === filterValue
-      );
-      setSelectedFilterLabel(filterValue);
-    } else {
-      setSelectedFilterLabel("");
+
+    // Apply type filters
+    if (selectedTypes.length > 0) {
+      result = result.filter(crop => selectedTypes.includes(crop.type));
     }
-    setNewArray(sortedAndFilteredArray);
-    setFilter(filterValue);
-  };
 
-  useEffect(() => {
-    // Function to extract query parameters from the URL
-    const getQueryParams = (url) => {
-      const queryParams = {};
-      const params = new URLSearchParams(url);
-      for (const param of params.entries()) {
-        queryParams[param[0]] = param[1];
-      }
-      return queryParams;
-    };
-
-    // Extract event, user, and price from the URL
-    const { crop, user, price } = getQueryParams(location.search);
-
-    // Send a request to your backend to store data in the database
-    const storeData = async () => {
-      try {
-        await axios.get(`http://localhost:5173/api/v1/bookings/booking`, {
-          params: { crop, user, price },
-        });
-        // Redirect to the normal localhost:5173 URL
-        window.location.href = "http://localhost:5173/crops";
-        //console.log("Data stored successfully");
-      } catch (error) {
-        console.error("Error storing data:", error);
-        // Handle errors
-      }
-    };
-
-    // Call the function to store data when the component mounts
-    storeData();
-  }, []);
-
-  const handelSearch = async (e) => {
-    e.preventDefault();
-    try {
-      setIsLoading(true); // Set loading to true when starting the search
-      const response = await axios.get(`/api/v1/crops/search?name=${search}`);
-      //console.log("Search response: ", response.data); // Log the response data
-
-      if (response.status !== 200)
-        throw new Error("Something went wrong with fetching crops");
-
-      let cropsData = response.data.data.crop;
-
-      //console.log("Search results: ", cropsData); // Log the search results
-
-      if (cropsData.length === 0) {
-        throw new Error("No crops found");
-      }
-
-      // Update the crops state with the search results
-      setCrops(cropsData);
-      setError(""); // Reset error state
-    } catch (error) {
-      setError(error.message);
-    } finally {
-      setIsLoading(false); // Set loading to false after search completion
-    }
-  };
-  function CustomSelect({ label, options, value, onChange }) {
-    return (
-      /*   <select
-        id={label}
-        name={label}
-        value={value}
-        onChange={onChange}
-        className="w-full h-10 border-2 border-gray-500 focus:outline-none focus:border-gray-500 text-gray-500 rounded px-2 md:px-3 py-0 md:py-1 tracking-wider"
-      > */
-      <select
-        id={label.toLowerCase()}
-        name={label.toLowerCase()}
-        value={value}
-        onChange={onChange}
-        className="w-full h-10 border-2 border-gray-500 focus:outline-none focus:border-gray-500 text-gray-500 rounded px-2 md:px-3 py-0 md:py-1 tracking-wider"
-      >
-        <option value="">{`Select ${label}`}</option>
-        {options.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+    // Apply price range filter
+    result = result.filter(crop => 
+      crop.price >= priceRange[0] && crop.price <= priceRange[1]
     );
-  }
+
+    // Apply sorting
+    switch (sortBy) {
+      case "price-high-to-low":
+        result.sort((a, b) => b.price - a.price);
+        break;
+      case "price-low-to-high":
+        result.sort((a, b) => a.price - b.price);
+        break;
+      case "recently-added":
+        result.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+        break;
+      default:
+        break;
+    }
+
+    setFilteredCrops(result);
+  }, [crops, search, selectedTypes, priceRange, sortBy]);
+
+  const handleTypeToggle = (type) => {
+    setSelectedTypes(prev => 
+      prev.includes(type) 
+        ? prev.filter(t => t !== type)
+        : [...prev, type]
+    );
+  };
+
+  const clearAllFilters = () => {
+    setSelectedTypes([]);
+    setPriceRange([Math.min(...crops.map(c => c.price)), Math.max(...crops.map(c => c.price))]);
+    setSearch("");
+    setSortBy("recently-added");
+  };
 
   return (
-    <>
-      <div className="flex items-center justify-between m-10">
-        <form
-          className="flex flex-col md:flex-row gap-3 w-full md:w-1/2 items-center"
-          onSubmit={handelSearch}
-        >
-          <div className="flex item-center ml-16">
-            <input
-              type="text"
-              placeholder="Search Crops.."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full md:w-80 px-3 h-10 rounded-l border-2 border-gray-500 focus:outline-none focus:border-gray-500"
-            />
-            <button
-              type="submit"
-              className="bg-gray-500 text-white rounded-r px-2 md:px-3 py-0 md:py-1"
-            >
-              Search
-            </button>
-          </div>
-        </form>
-        <div className="flex items-center space-x-4 mr-20">
-          <CustomSelect
-            label="Sort by"
-            options={[
-              { value: "price-high-to-low", label: "Price - High to Low" },
-              { value: "price-low-to-high", label: "Price - Low to High" },
-              { value: "recently-added", label: "Recently Added" },
-            ]}
-            onChange={(e) => handleSortAndFilterChange(e.target.value, filter)}
-          />
-          <CustomSelect
-            label="Filter by type"
-            options={[
-              { value: "Fertilizer", label: "Fertilizer" },
-              { value: "Seed", label: "Seed" },
-              { value: "Crop Protection", label: "Crop Protection" },
-            ]}
-            /*  value={filter} */
-            onChange={(e) =>
-              handleSortAndFilterChange(e.target.value, e.target.value)
-            }
-          />
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Top Filter Bar */}
+        <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+            {/* Search */}
+            <div className="relative flex-1 w-full">
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              />
+              <SearchIcon className="absolute left-3 top-2.5 text-gray-400" />
+            </div>
 
-      {selectedFilterLabel && (
-        <div className="ml-28 flex flex-row space-x-3">
-          <Typography level="h4">{selectedFilterLabel}s</Typography>
-          {filter !== "all" && (
-            <>
-              <button
-                onClick={() =>
-                  handleSortAndFilterChange("recently-added", "all")
-                }
-                className="ml-2 p-1  rounded-full bg-red-500 text-white focus:outline-none"
+            {/* Quick Filters */}
+            <div className="flex flex-wrap gap-2 items-center">
+              {cropTypes.map(type => (
+                <button
+                  key={type}
+                  onClick={() => handleTypeToggle(type)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                    selectedTypes.includes(type)
+                      ? 'bg-green-100 text-green-700 border-2 border-green-500'
+                      : 'bg-gray-50 text-gray-700 border border-gray-200 hover:bg-gray-100'
+                  }`}
+                >
+                  {type}
+                </button>
+              ))}
+            </div>
+
+            {/* Sort and Advanced Filters */}
+            <div className="flex gap-3 items-center">
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-4 py-2 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-green-500 text-sm"
               >
-                <ClearIcon className="w-4 h-4" />
+                <option value="recently-added">Recently Added</option>
+                <option value="price-high-to-low">Price: High to Low</option>
+                <option value="price-low-to-high">Price: Low to High</option>
+              </select>
+
+              <button
+                onClick={() => setShowFilters(!showFilters)}
+                className="flex items-center gap-2 px-4 py-2 text-gray-700 bg-gray-50 rounded-lg border border-gray-200 hover:bg-gray-100"
+              >
+                <TuneIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">Filters</span>
               </button>
-            </>
+
+              {(selectedTypes.length > 0 || search || sortBy !== "recently-added") && (
+                <button
+                  onClick={clearAllFilters}
+                  className="flex items-center gap-2 px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg text-sm font-medium"
+                >
+                  <ClearIcon fontSize="small" />
+                  Clear
+                </button>
+              )}
+            </div>
+          </div>
+
+          {/* Price Range Filter - Shown when filters are expanded */}
+          {showFilters && (
+            <div className="mt-4 pt-4 border-t border-gray-100">
+              <Typography variant="subtitle2" className="mb-3 text-gray-600">Price Range</Typography>
+              <div className="px-4">
+                <Slider
+                  value={priceRange}
+                  onChange={(_, newValue) => setPriceRange(newValue)}
+                  valueLabelDisplay="auto"
+                  min={Math.min(...crops.map(c => c.price))}
+                  max={Math.max(...crops.map(c => c.price))}
+                  sx={{
+                    color: '#16a34a',
+                    '& .MuiSlider-thumb': {
+                      backgroundColor: '#16a34a',
+                    },
+                    '& .MuiSlider-track': {
+                      backgroundColor: '#16a34a',
+                    },
+                    '& .MuiSlider-rail': {
+                      backgroundColor: '#e5e7eb',
+                    },
+                  }}
+                />
+                <div className="flex justify-between mt-2 text-sm text-gray-600">
+                  <span>₹{priceRange[0].toLocaleString()}</span>
+                  <span>₹{priceRange[1].toLocaleString()}</span>
+                </div>
+              </div>
+            </div>
           )}
-          {/* <h1>{selectedFilterLabel}</h1> */}
         </div>
-      )}
-      {isLoading && <ApiLoading />}
-      {!isLoading && error && <ErrorMessage message={error} />}
-      {!isLoading && !error && (
-        <section className="w-fit mx-auto grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 md-new:grid-cols-4 justify-items-center justify-center gap-y-20 gap-x-14 mt-16 mb-5">
-          {newArray?.map((crop) => (
+
+        {/* Active Filters */}
+        {selectedTypes.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-6">
+            {selectedTypes.map(type => (
+              <Chip
+                key={type}
+                label={type}
+                onDelete={() => handleTypeToggle(type)}
+                color="primary"
+                variant="outlined"
+                sx={{
+                  borderColor: '#16a34a',
+                  color: '#16a34a',
+                  '& .MuiChip-deleteIcon': {
+                    color: '#16a34a',
+                  },
+                }}
+              />
+            ))}
+          </div>
+        )}
+
+        {/* Results Count */}
+        <div className="mb-6">
+          <Typography variant="subtitle1" className="text-gray-600 font-medium">
+            {filteredCrops.length} Products Found
+          </Typography>
+        </div>
+
+        {/* Products Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          {isLoading && <ApiLoading />}
+          {!isLoading && error && <ErrorMessage message={error} />}
+          {!isLoading && !error && filteredCrops.map((crop) => (
             <div
-              className="w-72 bg-white shadow-md rounded-xl duration-500 hover:scale-105 hover:shadow-xl"
               key={crop._id}
+              className="bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300"
             >
               <Link to={`/crops/${crop._id}`}>
                 <NewProductCard
@@ -259,9 +259,18 @@ function Crops({ cart, setCart }) {
               </Link>
             </div>
           ))}
-        </section>
-      )}
-    </>
+        </div>
+
+        {/* No Results */}
+        {!isLoading && !error && filteredCrops.length === 0 && (
+          <div className="text-center py-12">
+            <Typography variant="h6" className="text-gray-500">
+              No products found matching your criteria
+            </Typography>
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
