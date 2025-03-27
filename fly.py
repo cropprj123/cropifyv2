@@ -23,12 +23,16 @@ import os
 from prophet import Prophet
 from datetime import datetime
 from sklearn.metrics import mean_absolute_error, mean_squared_error, mean_absolute_percentage_error
+from typing import Union, List, Dict, Any
+import logging
 
 warnings.simplefilter("ignore", InconsistentVersionWarning) 
 
 app = Flask(__name__)
 CORS(app)  
 translator = Translator()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 RF_model = joblib.load('crop.joblib')
 lg_model = joblib.load('logistic_regression_model.joblib')
@@ -41,19 +45,41 @@ crop_summary = pd.pivot_table(df, index=['label'], aggfunc='mean')
 
 with open('description.json', 'r') as file:
     fertilizer_dict = json.load(file)
-def translate_recursive(obj, dest='mr'):
+
+def translate_batch(texts: Union[str, List[str]], dest: str = 'mr') -> Union[str, List[str]]:
+    """
+    Translate a single text or list of texts to the target language.
+    """
+    try:
+        if isinstance(texts, str):
+            translation = translator.translate(texts, dest=dest)
+            return translation.text
+        elif isinstance(texts, list):
+            if not texts:  # Handle empty list
+                return texts
+            translations = translator.translate(texts, dest=dest)
+            # Handle both single and multiple translations
+            if isinstance(translations, list):
+                return [t.text for t in translations]
+            else:
+                return [translations.text]
+    except Exception as e:
+        print(f"Translation error: {e}")
+        return texts
+
+def translate_recursive(obj: Any, dest: str = 'mr') -> Any:
+    """
+    Recursively translate all strings in a nested structure.
+    """
     if isinstance(obj, dict):
         return {k: translate_recursive(v, dest) for k, v in obj.items()}
     elif isinstance(obj, list):
         return [translate_recursive(item, dest) for item in obj]
     elif isinstance(obj, str):
-        # Only translate meaningful strings
         if len(obj) > 1 and not obj.isupper() and not obj.isdigit():
-            try:
-                return translator.translate(obj, dest=dest).text
-            except:
-                return obj
+            return translate_batch(obj, dest)
     return obj
+
 @app.route('/translate', methods=['POST'])
 def translate_endpoint():
     try:

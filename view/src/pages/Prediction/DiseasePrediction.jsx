@@ -12,6 +12,18 @@ const DiseasePrediction = ({ cart, setCart }) => {
   const [activeTab, setActiveTab] = useState('overview');
   const [suggestedProducts, setSuggestedProducts] = useState([]);
   const [treatmentProducts, setTreatmentProducts] = useState([]);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+
+  const languages = [
+    { code: 'en', name: 'English' },
+    { code: 'mr', name: 'Marathi' },
+    { code: 'hi', name: 'Hindi' },
+    { code: 'gu', name: 'Gujarati' },
+    { code: 'ja', name: 'Japanese' },
+    { code: 'de', name: 'German' },
+    { code: 'fr', name: 'French' },
+    { code: 'es', name: 'Spanish' }
+  ];
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -57,27 +69,29 @@ const DiseasePrediction = ({ cart, setCart }) => {
     setError(null);
 
     try {
-      const response = await axios.post('/api/v1/crops/detect-crop-disease', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+      // Only add language parameter if it's not English
+      const endpoint = selectedLanguage === 'en'
+        ? '/api/v1/crops/detect-crop-disease'
+        : `/api/v1/crops/detect-crop-disease?lang=${selectedLanguage}`;
+
+      const response = await axios.post(
+        endpoint,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
       setPrediction(response.data);
       
-      // Only fetch treatment products based on recommendedProducts array
       if (response.data.predictions && response.data.predictions[0]) {
         const recommendedProducts = response.data.predictions[0].info.recommendedProducts;
-        
-        // Fetch each recommended product
         const treatmentResults = await Promise.all(
           recommendedProducts.map(productName => fetchProductsByName(productName))
         );
-        
-        // Flatten the results and remove any empty arrays
         const flattenedTreatmentProducts = treatmentResults.flat().filter(Boolean);
         setTreatmentProducts(flattenedTreatmentProducts);
-        
-        // Clear suggested products since we're not using them
         setSuggestedProducts([]);
       }
     } catch (err) {
@@ -118,6 +132,25 @@ const DiseasePrediction = ({ cart, setCart }) => {
             <div className="p-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Crop Disease Prediction</h2>
               
+              {/* Language Selector */}
+              <div className="mb-6">
+                <label htmlFor="language" className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Language
+                </label>
+                <select
+                  id="language"
+                  value={selectedLanguage}
+                  onChange={(e) => setSelectedLanguage(e.target.value)}
+                  className="block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                >
+                  {languages.map((lang) => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Image Upload Section */}
               <div className="mb-8">
                 <div className="flex items-center justify-center w-full">

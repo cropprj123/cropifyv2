@@ -15,7 +15,11 @@ import {
   Accordion,
   AccordionSummary,
   AccordionDetails,
-  LinearProgress
+  LinearProgress,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem
 } from '@mui/material';
 import { 
   CloudUpload,
@@ -26,7 +30,8 @@ import {
   Grass,
   Spa,
   ShoppingCart,
-  Info
+  Info,
+  Translate
 } from '@mui/icons-material';
 import axios from 'axios';
 import { Link } from "react-router-dom";
@@ -42,6 +47,18 @@ const VideoDiseaseDetection = ({ cart, setCart }) => {
   const [productTab, setProductTab] = useState('treatment');
   const [suggestedProducts, setSuggestedProducts] = useState([]);
   const [treatmentProducts, setTreatmentProducts] = useState([]);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
+
+  const languages = [
+    { code: 'en', name: 'English' },
+    { code: 'mr', name: 'Marathi' },
+    { code: 'hi', name: 'Hindi' },
+    { code: 'gu', name: 'Gujarati' },
+    { code: 'ja', name: 'Japanese' },
+    { code: 'de', name: 'German' },
+    { code: 'fr', name: 'French' },
+    { code: 'es', name: 'Spanish' }
+  ];
 
   const fetchProductsByName = async (name) => {
     try {
@@ -78,45 +95,51 @@ const VideoDiseaseDetection = ({ cart, setCart }) => {
     }
   };
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (e) => {
+    e.preventDefault();
     if (!selectedVideo) {
       setError('Please select a video first');
       return;
     }
 
-    setLoading(true);
-    setError(null);
-
     const formData = new FormData();
     formData.append('video', selectedVideo);
 
-    try {
-      const response = await axios.post('/api/v1/crops/detect-crop-disease-video', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
+    setLoading(true);
+    setError(null);
 
-      setResults(response.data.predictions);
+    try {
+      // Only add language parameter if it's not English
+      const endpoint = selectedLanguage === 'en' 
+        ? '/api/v1/crops/detect-crop-disease-video'
+        : `/api/v1/crops/detect-crop-disease-video?lang=${selectedLanguage}`;
+
+      const response = await axios.post(
+        endpoint,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        }
+      );
+
+      // Store the entire response data
+      setResults(response.data);
       
-      // Only fetch treatment products based on recommendedProducts array
+      // Check if we have predictions and recommended products
       if (response.data.predictions && response.data.predictions[0]) {
         const recommendedProducts = response.data.predictions[0].info.recommendedProducts;
-        
-        // Fetch each recommended product
         const treatmentResults = await Promise.all(
           recommendedProducts.map(productName => fetchProductsByName(productName))
         );
-        
-        // Flatten the results and remove any empty arrays
         const flattenedTreatmentProducts = treatmentResults.flat().filter(Boolean);
         setTreatmentProducts(flattenedTreatmentProducts);
-        
-        // Clear suggested products since we're not using them
         setSuggestedProducts([]);
       }
-    } catch (err) {
-      setError(err.response?.data?.message || 'An error occurred while analyzing the video');
+    } catch (error) {
+      console.error("Video Disease Detection Error:", error);
+      setError(error.response?.data?.message || 'Video disease detection failed');
     } finally {
       setLoading(false);
     }
@@ -153,6 +176,30 @@ const VideoDiseaseDetection = ({ cart, setCart }) => {
             <div className="p-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Video Disease Detection</h2>
               
+              {/* Language Selector */}
+              <div className="mb-6">
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="language-select-label">
+                    <div className="flex items-center">
+                      <Translate className="mr-2" />
+                      Select Language
+                    </div>
+                  </InputLabel>
+                  <Select
+                    labelId="language-select-label"
+                    value={selectedLanguage}
+                    onChange={(e) => setSelectedLanguage(e.target.value)}
+                    label="Select Language"
+                  >
+                    {languages.map((lang) => (
+                      <MenuItem key={lang.code} value={lang.code}>
+                        {lang.name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </div>
+
               {/* Video Upload Section */}
               <div className="mb-8">
                 <div className="flex items-center justify-center w-full">
@@ -220,29 +267,29 @@ const VideoDiseaseDetection = ({ cart, setCart }) => {
               )}
 
               {/* Results Section */}
-              {results && results[0] && (
+              {results && results.predictions && results.predictions[0] && (
                 <div className="mt-8 bg-white rounded-lg border border-gray-200 shadow-md">
                   {/* Header Section */}
                   <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-green-50 to-white">
                     <div className="flex justify-between items-start">
                       <div>
                         <h3 className="text-2xl font-bold text-gray-800">
-                          {results[0].disease}
+                          {results.predictions[0].disease}
                         </h3>
                         <p className="text-gray-600 mt-1 italic">
-                          {results[0].info.scientificName}
+                          {results.predictions[0].info.scientificName}
                         </p>
                         <div className="mt-3 flex items-center">
                           <Chip 
                             icon={<LocalFlorist />} 
-                            label={`Affects: ${results[0].info.cropAffected}`} 
+                            label={`Affects: ${results.predictions[0].info.cropAffected}`} 
                             variant="outlined" 
                             color="primary"
                             className="mr-2"
                           />
                           <Chip 
                             icon={<Info />} 
-                            label={`Detected in ${results[0].count} frames`} 
+                            label={`Detected in ${results.predictions[0].count} frames`} 
                             variant="outlined" 
                             color="secondary"
                           />
@@ -251,9 +298,9 @@ const VideoDiseaseDetection = ({ cart, setCart }) => {
                       <div className="text-right">
                         <div className="text-sm text-gray-600 mb-1">Confidence</div>
                         <div className="text-2xl font-bold text-gray-800">
-                          {(results[0].confidence * 100).toFixed(1)}%
+                          {(results.predictions[0].confidence * 100).toFixed(1)}%
                         </div>
-                        {renderConfidenceBar(results[0].confidence)}
+                        {renderConfidenceBar(results.predictions[0].confidence)}
                       </div>
                     </div>
                   </div>
@@ -292,12 +339,12 @@ const VideoDiseaseDetection = ({ cart, setCart }) => {
                       <div>
                         <h4 className="text-lg font-semibold mb-4 text-green-700">About the Disease</h4>
                         <p className="text-gray-700 mb-6 leading-relaxed">
-                          {results[0].info.detailedDescription}
+                          {results.predictions[0].info.detailedDescription}
                         </p>
                         
                         <h4 className="text-lg font-semibold mb-4 text-green-700">Spreading Conditions</h4>
                         <ul className="list-disc pl-5 space-y-2">
-                          {results[0].info.spreadingConditions.map((condition, index) => (
+                          {results.predictions[0].info.spreadingConditions.map((condition, index) => (
                             <li key={index} className="text-gray-700">{condition}</li>
                           ))}
                         </ul>
@@ -308,7 +355,7 @@ const VideoDiseaseDetection = ({ cart, setCart }) => {
                       <div>
                         <h4 className="text-lg font-semibold mb-4 text-green-700">Disease Symptoms</h4>
                         <ul className="list-disc pl-5 space-y-2">
-                          {results[0].info.symptoms.map((symptom, index) => (
+                          {results.predictions[0].info.symptoms.map((symptom, index) => (
                             <li key={index} className="text-gray-700">{symptom}</li>
                           ))}
                         </ul>
@@ -319,7 +366,7 @@ const VideoDiseaseDetection = ({ cart, setCart }) => {
                       <div>
                         <h4 className="text-lg font-semibold mb-4 text-green-700">Recommended Treatments</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                          {results[0].info.treatment.chemical.map((treatment, index) => (
+                          {results.predictions[0].info.treatment.chemical.map((treatment, index) => (
                             <div key={index} className="bg-red-50 p-4 rounded-lg border border-red-100 shadow-sm">
                               <div className="flex items-start">
                                 <Warning className="text-red-500 mr-2 mt-1" />
@@ -331,7 +378,7 @@ const VideoDiseaseDetection = ({ cart, setCart }) => {
                         
                         <h4 className="text-lg font-semibold mb-4 mt-6 text-green-700">Organic Solutions</h4>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                          {results[0].info.treatment.organic.map((treatment, index) => (
+                          {results.predictions[0].info.treatment.organic.map((treatment, index) => (
                             <div key={index} className="bg-green-50 p-4 rounded-lg border border-green-100 shadow-sm">
                               <div className="flex items-start">
                                 <Spa className="text-green-500 mr-2 mt-1" />
@@ -350,7 +397,7 @@ const VideoDiseaseDetection = ({ cart, setCart }) => {
                           <div>
                             <h4 className="text-lg font-semibold mb-4 text-green-700">Prevention Methods</h4>
                             <ul className="space-y-3">
-                              {results[0].info.prevention.map((method, index) => (
+                              {results.predictions[0].info.prevention.map((method, index) => (
                                 <li key={index} className="bg-blue-50 p-4 rounded-lg border border-blue-100 shadow-sm flex items-start">
                                   <span className="text-blue-800 mr-2">•</span>
                                   <span className="text-gray-700">{method}</span>
@@ -363,7 +410,7 @@ const VideoDiseaseDetection = ({ cart, setCart }) => {
                           <div>
                             <h4 className="text-lg font-semibold mb-4 text-green-700">Recommended Products</h4>
                             <div className="space-y-3">
-                              {results[0].info.recommendedProducts.map((product, index) => (
+                              {results.predictions[0].info.recommendedProducts.map((product, index) => (
                                 <div key={index} className="bg-green-50 p-4 rounded-lg border border-green-100 shadow-sm">
                                   <div className="flex items-start">
                                     <ShoppingCart className="text-green-500 mr-2 mt-1" />
@@ -385,7 +432,7 @@ const VideoDiseaseDetection = ({ cart, setCart }) => {
 
         {/* Right Column - Products and Additional Information */}
         <div className="lg:w-1/3 space-y-6">
-          {results && results[0] && (
+          {results && results.predictions && results.predictions[0] && (
             <>
               {/* Product Recommendations */}
               <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -511,9 +558,9 @@ const VideoDiseaseDetection = ({ cart, setCart }) => {
                   </h3>
                 </div>
                 <div className="p-4">
-                  {results[0].info.environmentalFactors?.length > 0 ? (
+                  {results.predictions[0].info.environmentalFactors?.length > 0 ? (
                     <div className="space-y-3">
-                      {results[0].info.environmentalFactors.map((factor, index) => (
+                      {results.predictions[0].info.environmentalFactors.map((factor, index) => (
                         <div key={index} className="bg-blue-50 p-3 rounded-lg border border-blue-100 flex items-start">
                           <span className="text-blue-500 mr-2">•</span>
                           <span className="text-gray-700">{factor}</span>

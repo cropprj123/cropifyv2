@@ -20,7 +20,19 @@ export default function CropPrediction({ cart, setCart }) {
   });
   const [crop, setCrop] = useState("");
   const [got, setGot] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [fert, setFert] = useState(null);
+
+  const languages = [
+    { code: 'en', name: 'English' },
+    { code: 'mr', name: 'Marathi' },
+    { code: 'hi', name: 'Hindi' },
+    { code: 'gu', name: 'Gujarati' },
+    { code: 'ja', name: 'Japanese' },
+    { code: 'de', name: 'German' },
+    { code: 'fr', name: 'French' },
+    { code: 'es', name: 'Spanish' }
+  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -34,25 +46,20 @@ export default function CropPrediction({ cart, setCart }) {
     e.preventDefault();
     setLoading(true);
     const { N, P, K, temperature, humidity, pH, rainfall } = inputData;
-
+    
     try {
-      const response = await axios.get(`/api/v1/crops/singlecrop`, {
+      // Only add language parameter if it's not English
+      const endpoint = selectedLanguage === 'en'
+        ? '/api/v1/crops/infopredict'
+        : `/api/v1/crops/infopredict?lang=${selectedLanguage}`;
+
+      const response = await axios.get(endpoint, {
         params: {
-          data: [N, P, K, temperature, humidity, pH, rainfall].map(parseFloat),
+          data: [N, P, K, temperature, humidity, pH, rainfall].map(parseFloat)
         },
       });
-      // Extract the prediction from the response and do something with it
-      //console.log("Prediction:", response.data.prediction.prediction);
-
-      setCrop(response.data.prediction.prediction);
-
-      // Fire the search after the prediction arrives
-      const searchResponse = await axios.get(
-        `/api/v1/crops/search?name=${response.data.prediction.prediction[0]}`
-      );
-      //console.log("Search response: ", searchResponse.data.data.crop);
-      setFert(searchResponse.data.data.crop);
-
+      
+      setCrop(response.data);
       setGot(true);
     } catch (error) {
       console.error("Prediction Error:", error);
@@ -76,7 +83,71 @@ export default function CropPrediction({ cart, setCart }) {
       {loading && <ApiLoading />}
       
       <div className="max-w-7xl mx-auto">
-        {got ? (
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden p-8 mb-8">
+          <h2 className="text-2xl font-bold text-gray-800 mb-6">Soil Analysis</h2>
+
+          {/* Language Selector */}
+          <div className="mb-6">
+            <label htmlFor="language" className="block text-sm font-medium text-gray-700 mb-2">
+              Select Language
+            </label>
+            <select
+              id="language"
+              value={selectedLanguage}
+              onChange={(e) => setSelectedLanguage(e.target.value)}
+              className="block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+            >
+              {languages.map((lang) => (
+                <option key={lang.code} value={lang.code}>
+                  {lang.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {inputFields.map((field) => (
+                <div key={field.name}>
+                  <label htmlFor={field.name} className="block text-sm font-medium text-gray-700">
+                    {field.label} {field.unit && `(${field.unit})`}
+                  </label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    name={field.name}
+                    id={field.name}
+                    value={inputData[field.name]}
+                    onChange={handleChange}
+                    required
+                    className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-green-500 focus:border-green-500"
+                  />
+                  {field.help && (
+                    <p className="mt-1 text-sm text-gray-500">{field.help}</p>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-center">
+              <button
+                type="submit"
+                disabled={loading}
+                className={`px-6 py-3 rounded-lg text-white font-medium transition-all duration-300 ${
+                  loading
+                    ? 'bg-gray-400 cursor-not-allowed'
+                    : 'bg-green-500 hover:bg-green-600 hover:shadow-lg transform hover:-translate-y-1'
+                }`}
+              >
+                {loading ? 'Analyzing...' : 'Analyze Soil'}
+              </button>
+            </div>
+          </form>
+        </div>
+
+        {/* Results Section */}
+        {got && crop && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -135,68 +206,6 @@ export default function CropPrediction({ cart, setCart }) {
                 </p>
               </div>
             )}
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className="text-center space-y-4 mb-12">
-              <h1 className="text-4xl font-bold text-gray-900">
-                Crop Recommendation
-              </h1>
-              <p className="text-xl text-gray-600">
-                Enter your soil and environmental parameters to get personalized crop recommendations
-              </p>
-            </div>
-
-            <form
-              onSubmit={handleSubmit}
-              className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl p-8"
-            >
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {inputFields.map((field) => (
-                  <div key={field.name} className="space-y-2">
-                    <label
-                      htmlFor={field.name}
-                      className="block text-sm font-medium text-gray-700"
-                    >
-                      {field.label}
-                    </label>
-                    <div className="relative rounded-md shadow-sm">
-                      <input
-                        type="number"
-                        step="0.01"
-                        id={field.name}
-                        name={field.name}
-                        value={inputData[field.name]}
-                        onChange={handleChange}
-                        className="block w-full rounded-lg border-gray-300 pl-4 pr-12 py-3 focus:ring-2 focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                        placeholder="Enter value"
-                        required
-                      />
-                      <div className="absolute inset-y-0 right-0 flex items-center pr-3">
-                        <span className="text-gray-500 sm:text-sm">
-                          {field.unit}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-8 flex justify-center">
-                <motion.button
-                  whileHover={{ scale: 1.02 }}
-                  whileTap={{ scale: 0.98 }}
-                  type="submit"
-                  className="inline-flex items-center px-8 py-3 border border-transparent text-base font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
-                >
-                  Get Recommendation
-                </motion.button>
-              </div>
-            </form>
           </motion.div>
         )}
       </div>
