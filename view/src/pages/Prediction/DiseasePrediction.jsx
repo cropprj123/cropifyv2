@@ -1,23 +1,19 @@
-import React, { useState, useRef } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
 import { Link } from "react-router-dom";
 import NewProductCard from "../../components/NewProductCard";
-import { Box, Button, Typography, CircularProgress, Alert, FormControl, InputLabel, Select, MenuItem } from '@mui/material';
-import { PhotoCamera, Upload, Cameraswitch } from '@mui/icons-material';
+import DiseasesPanel from "../../components/DiseasesPanel";
 
 const DiseasePrediction = ({ cart, setCart }) => {
-  const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
+  const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [results, setResults] = useState(null);
   const [activeTab, setActiveTab] = useState('overview');
   const [suggestedProducts, setSuggestedProducts] = useState([]);
   const [treatmentProducts, setTreatmentProducts] = useState([]);
   const [selectedLanguage, setSelectedLanguage] = useState('en');
-  const [isUsingCamera, setIsUsingCamera] = useState(false);
-  const videoRef = useRef(null);
-  const streamRef = useRef(null);
 
   const languages = [
     { code: 'en', name: 'English' },
@@ -30,55 +26,15 @@ const DiseasePrediction = ({ cart, setCart }) => {
     { code: 'es', name: 'Spanish' }
   ];
 
-  // Function to start camera
-  const startCamera = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      videoRef.current.srcObject = stream;
-      streamRef.current = stream;
-      setIsUsingCamera(true);
-      setPreviewUrl(null);
-      setSelectedFile(null);
-    } catch (err) {
-      setError('Failed to access camera. Please make sure you have granted camera permissions.');
-      console.error('Error accessing camera:', err);
-    }
-  };
-
-  // Function to stop camera
-  const stopCamera = () => {
-    if (streamRef.current) {
-      streamRef.current.getTracks().forEach(track => track.stop());
-      streamRef.current = null;
-      videoRef.current.srcObject = null;
-      setIsUsingCamera(false);
-    }
-  };
-
-  // Function to capture photo from camera
-  const capturePhoto = () => {
-    const canvas = document.createElement('canvas');
-    canvas.width = videoRef.current.videoWidth;
-    canvas.height = videoRef.current.videoHeight;
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(videoRef.current, 0, 0);
-    
-    // Convert to blob
-    canvas.toBlob((blob) => {
-      const file = new File([blob], "captured-image.jpg", { type: "image/jpeg" });
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(blob));
-      stopCamera();
-    }, 'image/jpeg');
-  };
-
-  // Function to handle file selection
-  const handleFileSelect = (event) => {
-    const file = event.target.files[0];
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
     if (file) {
-      setSelectedFile(file);
+      setSelectedImage(file);
       setPreviewUrl(URL.createObjectURL(file));
-      stopCamera(); // Stop camera if it's running
+      setPrediction(null);
+      setError(null);
+      setSuggestedProducts([]);
+      setTreatmentProducts([]);
     }
   };
 
@@ -102,17 +58,16 @@ const DiseasePrediction = ({ cart, setCart }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!selectedFile) {
-      setError('Please select an image or capture one from camera');
+    if (!selectedImage) {
+      setError('Please select an image first');
       return;
     }
 
+    const formData = new FormData();
+    formData.append('image', selectedImage);
+
     setLoading(true);
     setError(null);
-    setResults(null);
-
-    const formData = new FormData();
-    formData.append('image', selectedFile);
 
     try {
       // Only add language parameter if it's not English
@@ -120,13 +75,16 @@ const DiseasePrediction = ({ cart, setCart }) => {
         ? '/api/v1/crops/detect-crop-disease'
         : `/api/v1/crops/detect-crop-disease?lang=${selectedLanguage}`;
 
-      const response = await axios.post(endpoint, formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
-      });
-
-      setResults(response.data);
+      const response = await axios.post(
+        endpoint,
+        formData,
+        {
+          headers: {
+            'Content-Type': 'multipart/form-data',
+          },
+        }
+      );
+      setPrediction(response.data);
       
       if (response.data.predictions && response.data.predictions[0]) {
         const recommendedProducts = response.data.predictions[0].info.recommendedProducts;
@@ -137,9 +95,8 @@ const DiseasePrediction = ({ cart, setCart }) => {
         setTreatmentProducts(flattenedTreatmentProducts);
         setSuggestedProducts([]);
       }
-    } catch (error) {
-      console.error('Disease Detection Error:', error);
-      setError(error.response?.data?.message || 'Failed to detect disease');
+    } catch (err) {
+      setError(err.response?.data?.message || 'Something went wrong');
     } finally {
       setLoading(false);
     }
@@ -168,150 +125,317 @@ const DiseasePrediction = ({ cart, setCart }) => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-green-50 to-white py-12 px-4 sm:px-6 lg:px-8">
-      <div className="max-w-3xl mx-auto">
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden p-8">
-          <h2 className="text-2xl font-bold text-gray-800 mb-6 text-center">
-            Plant Disease Detection
-          </h2>
-
-          {/* Language Selector */}
-          <div className="mb-6">
-            <FormControl fullWidth variant="outlined">
-              <InputLabel>Select Language</InputLabel>
-              <Select
-                value={selectedLanguage}
-                onChange={(e) => setSelectedLanguage(e.target.value)}
-                label="Select Language"
-              >
-                {languages.map((lang) => (
-                  <MenuItem key={lang.code} value={lang.code}>
-                    {lang.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-          </div>
-
-          {/* Camera and Upload Section */}
-          <div className="space-y-6">
-            {/* Camera View */}
-            <div className="relative">
-              <video
-                ref={videoRef}
-                autoPlay
-                playsInline
-                className={`w-full rounded-lg ${isUsingCamera ? 'block' : 'hidden'}`}
-              />
+    <div className="max-w-7xl mx-auto p-6">
+      <div className="flex flex-col lg:flex-row gap-6">
+        {/* Left Column - Disease Prediction */}
+        <div className="lg:w-2/3">
+          <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+            <div className="p-8">
+              <h2 className="text-2xl font-bold text-gray-800 mb-6">Crop Disease Prediction</h2>
               
-              {/* Image Preview */}
-              {previewUrl && (
-                <div className="relative">
-                  <img
-                    src={previewUrl}
-                    alt="Preview"
-                    className="w-full rounded-lg"
-                  />
-                  <button
-                    onClick={() => {
-                      setPreviewUrl(null);
-                      setSelectedFile(null);
-                    }}
-                    className="absolute top-2 right-2 bg-red-500 text-white p-2 rounded-full hover:bg-red-600"
+              {/* Language Selector */}
+              <div className="mb-6">
+                <label htmlFor="language" className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Language
+                </label>
+                <select
+                  id="language"
+                  value={selectedLanguage}
+                  onChange={(e) => setSelectedLanguage(e.target.value)}
+                  className="block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                >
+                  {languages.map((lang) => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Image Upload Section */}
+              <div className="mb-8">
+                <div className="flex items-center justify-center w-full">
+                  <label
+                    htmlFor="image-upload"
+                    className="flex flex-col items-center justify-center w-full h-64 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100"
                   >
-                    ×
-                  </button>
+                    {previewUrl ? (
+                      <img
+                        src={previewUrl}
+                        alt="Preview"
+                        className="max-h-60 object-contain"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <svg
+                          className="w-10 h-10 mb-3 text-gray-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                          xmlns="http://www.w3.org/2000/svg"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                          ></path>
+                        </svg>
+                        <p className="mb-2 text-sm text-gray-500">
+                          <span className="font-semibold">Click to upload</span> or drag and drop
+                        </p>
+                        <p className="text-xs text-gray-500">PNG, JPG or JPEG (MAX. 800x400px)</p>
+                      </div>
+                    )}
+                    <input
+                      id="image-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={handleImageChange}
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex justify-center">
+                <button
+                  onClick={handleSubmit}
+                  disabled={loading || !selectedImage}
+                  className={`px-6 py-3 rounded-lg text-white font-medium ${
+                    loading || !selectedImage
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-green-500 hover:bg-green-600'
+                  }`}
+                >
+                  {loading ? 'Analyzing...' : 'Predict Disease'}
+                </button>
+              </div>
+
+              {/* Error Message */}
+              {error && (
+                <div className="mt-4 p-4 bg-red-50 rounded-lg">
+                  <p className="text-red-600 text-sm">{error}</p>
                 </div>
               )}
-            </div>
 
-            {/* Camera Controls */}
-            <div className="flex justify-center space-x-4">
-              {!isUsingCamera ? (
-                <button
-                  onClick={startCamera}
-                  className="flex items-center px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors"
-                >
-                  <PhotoCamera className="mr-2" />
-                  Open Camera
-                </button>
-              ) : (
-                <button
-                  onClick={capturePhoto}
-                  className="flex items-center px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                >
-                  <Cameraswitch className="mr-2" />
-                  Capture Photo
-                </button>
+              {/* Prediction Results */}
+              {prediction && prediction.predictions && prediction.predictions[0] && (
+                <div className="mt-8 bg-white rounded-lg border border-gray-200">
+                  {/* Header Section */}
+                  <div className="p-6 border-b border-gray-200">
+                    <div className="flex justify-between items-start">
+                      <div>
+                        <h3 className="text-2xl font-bold text-gray-800">
+                          {prediction.predictions[0].info.name}
+                        </h3>
+                        <p className="text-gray-600 mt-1">
+                          {prediction.predictions[0].info.scientificName}
+                        </p>
+                        <p className="text-sm text-gray-500 mt-2">
+                          Affects: {prediction.predictions[0].info.cropAffected}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <div className="text-sm text-gray-600 mb-1">Confidence</div>
+                        <div className="text-2xl font-bold text-gray-800">
+                          {(prediction.predictions[0].confidence * 100).toFixed(1)}%
+                        </div>
+                        {renderConfidenceBar(prediction.predictions[0].confidence)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Navigation Tabs */}
+                  <div className="flex gap-2 p-4 border-b border-gray-200 bg-gray-50 overflow-x-auto">
+                    <TabButton
+                      id="overview"
+                      label="Overview"
+                      active={activeTab === 'overview'}
+                      onClick={setActiveTab}
+                    />
+                    <TabButton
+                      id="symptoms"
+                      label="Symptoms"
+                      active={activeTab === 'symptoms'}
+                      onClick={setActiveTab}
+                    />
+                    <TabButton
+                      id="treatment"
+                      label="Treatment"
+                      active={activeTab === 'treatment'}
+                      onClick={setActiveTab}
+                    />
+                    <TabButton
+                      id="prevention"
+                      label="Prevention"
+                      active={activeTab === 'prevention'}
+                      onClick={setActiveTab}
+                    />
+                  </div>
+
+                  {/* Content Sections */}
+                  <div className="p-6">
+                    {activeTab === 'overview' && (
+                      <div>
+                        <h4 className="text-lg font-semibold mb-4">About the Disease</h4>
+                        <p className="text-gray-700 mb-6">
+                          {prediction.predictions[0].info.detailedDescription}
+                        </p>
+                        
+                        <h4 className="text-lg font-semibold mb-4">Spreading Conditions</h4>
+                        <ul className="list-disc pl-5 space-y-2">
+                          {prediction.predictions[0].info.spreadingConditions.map((condition, index) => (
+                            <li key={index} className="text-gray-700">{condition}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {activeTab === 'symptoms' && (
+                      <div>
+                        <h4 className="text-lg font-semibold mb-4">Disease Symptoms</h4>
+                        <ul className="list-disc pl-5 space-y-2">
+                          {prediction.predictions[0].info.symptoms.map((symptom, index) => (
+                            <li key={index} className="text-gray-700">{symptom}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {activeTab === 'treatment' && (
+                      <div>
+                        <h4 className="text-lg font-semibold mb-4">Recommended Products</h4>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                          {prediction.predictions[0].info.recommendedProducts.map((product, index) => (
+                            <div key={index} className="bg-green-50 p-3 rounded-lg">
+                              <span className="text-green-800">{product}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTab === 'prevention' && (
+                      <div>
+                        <h4 className="text-lg font-semibold mb-4">Prevention Methods</h4>
+                        <ul className="list-disc pl-5 space-y-2">
+                          {prediction.predictions[0].info.prevention.map((method, index) => (
+                            <li key={index} className="text-gray-700">{method}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </div>
               )}
-
-              {/* File Upload Button */}
-              <label className="flex items-center px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition-colors cursor-pointer">
-                <Upload className="mr-2" />
-                Upload Image
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-              </label>
-            </div>
-
-            {error && (
-              <Alert severity="error" className="mt-4">
-                {error}
-              </Alert>
-            )}
-
-            {/* Submit Button */}
-            <div className="flex justify-center mt-6">
-              <button
-                onClick={handleSubmit}
-                disabled={!selectedFile || loading}
-                className={`px-6 py-3 rounded-lg text-white font-medium transition-all duration-300 ${
-                  !selectedFile || loading
-                    ? 'bg-gray-400 cursor-not-allowed'
-                    : 'bg-green-500 hover:bg-green-600 hover:shadow-lg transform hover:-translate-y-1'
-                }`}
-              >
-                {loading ? (
-                  <CircularProgress size={24} color="inherit" />
-                ) : (
-                  'Detect Disease'
-                )}
-              </button>
             </div>
           </div>
+        </div>
 
-          {/* Results Section */}
-          {results && results.predictions && results.predictions.length > 0 && (
-            <div className="mt-8 p-6 bg-white rounded-lg border border-gray-200">
-              <h3 className="text-xl font-semibold mb-4">Detection Results</h3>
-              {results.predictions.map((prediction, index) => (
-                <div key={index} className="mb-4 p-4 bg-gray-50 rounded-lg">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-semibold text-lg">{prediction.disease}</p>
-                      <p className="text-gray-600">{prediction.info.scientificName}</p>
-                    </div>
-                    <div className="text-right">
-                      <p className="text-sm text-gray-500">Confidence</p>
-                      <p className="font-bold text-lg">
-                        {(prediction.confidence * 100).toFixed(1)}%
-                      </p>
+        {/* Right Column - Product Suggestions */}
+        <div className="lg:w-1/3 space-y-6">
+          {/* Combined Products Section with Tabs */}
+          {(treatmentProducts.length > 0 || suggestedProducts.length > 0) && (
+            <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+              {/* Product Navigation Tabs */}
+              <div className="flex border-b border-gray-200">
+                <button
+                  onClick={() => setActiveTab('treatment')}
+                  className={`flex-1 py-3 px-4 text-sm font-medium text-center transition-colors ${
+                    activeTab === 'treatment'
+                      ? 'bg-green-50 text-green-600 border-b-2 border-green-500'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Treatment Products
+                  {treatmentProducts.length > 0 && (
+                    <span className="ml-2 bg-green-100 text-green-600 px-2 py-0.5 rounded-full text-xs">
+                      {treatmentProducts.length}
+                    </span>
+                  )}
+                </button>
+                <button
+                  onClick={() => setActiveTab('related')}
+                  className={`flex-1 py-3 px-4 text-sm font-medium text-center transition-colors ${
+                    activeTab === 'related'
+                      ? 'bg-green-50 text-green-600 border-b-2 border-green-500'
+                      : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  Related Products
+                  {suggestedProducts.length > 0 && (
+                    <span className="ml-2 bg-green-100 text-green-600 px-2 py-0.5 rounded-full text-xs">
+                      {suggestedProducts.length}
+                    </span>
+                  )}
+                </button>
+              </div>
+
+              {/* Products Display */}
+              <div className="p-4">
+                {activeTab === 'treatment' && treatmentProducts.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+                      {treatmentProducts.map((product) => (
+                        <div
+                          key={product._id}
+                          className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300"
+                        >
+                          <Link to={`/crops/${product._id}`}>
+                            <NewProductCard
+                              cart={cart}
+                              cropid={product._id}
+                              setCart={setCart}
+                              name={product.name}
+                              image={product.image}
+                              type={product.type}
+                              price={product.price}
+                              description={product.description}
+                              quantity={product.quantity}
+                            />
+                          </Link>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                  
-                  <div className="mt-4">
-                    <p className="text-gray-700">{prediction.info.detailedDescription}</p>
+                )}
+
+                {activeTab === 'related' && suggestedProducts.length > 0 && (
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4">
+                      {suggestedProducts.map((product) => (
+                        <div
+                          key={product._id}
+                          className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300"
+                        >
+                          <Link to={`/crops/${product._id}`}>
+                            <NewProductCard
+                              cart={cart}
+                              cropid={product._id}
+                              setCart={setCart}
+                              name={product.name}
+                              image={product.image}
+                              type={product.type}
+                              price={product.price}
+                              description={product.description}
+                              quantity={product.quantity}
+                            />
+                          </Link>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              ))}
+                )}
+              </div>
             </div>
           )}
         </div>
       </div>
+      
+      {/* Add DiseasesPanel */}
+      <DiseasesPanel />
     </div>
   );
 };
