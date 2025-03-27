@@ -1,0 +1,203 @@
+extends baseEmail
+
+block content
+  style.
+    .admin-notification {
+      padding: 30px;
+      background: #ffffff;
+      border-radius: 15px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+    }
+    
+    .notification-header {
+      text-align: center;
+      padding: 25px;
+      background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+      color: white;
+      border-radius: 12px;
+      margin-bottom: 30px;
+      box-shadow: 0 4px 12px rgba(39, 174, 96, 0.2);
+    }
+    
+    .notification-header h1 {
+      margin: 0 0 10px 0;
+      font-size: 28px;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+    }
+    
+    .notification-header p {
+      margin: 0;
+      opacity: 0.9;
+      font-size: 16px;
+    }
+    
+    .product-card {
+      background: #f8f9fa;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 20px 0;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    .product-image {
+      width: 120px;
+      height: 120px;
+      border-radius: 10px;
+      object-fit: cover;
+      margin-right: 20px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .product-info {
+      flex: 1;
+    }
+    
+    .product-name {
+      font-size: 20px;
+      font-weight: bold;
+      color: #2c3e50;
+      margin-bottom: 10px;
+    }
+    
+    .customer-info {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      padding: 25px;
+      border-radius: 12px;
+      margin: 20px 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    .customer-info h3 {
+      color: #2c3e50;
+      margin: 0 0 20px 0;
+      font-size: 22px;
+      border-bottom: 2px solid #dee2e6;
+      padding-bottom: 10px;
+    }
+    
+    .order-details {
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+      padding: 25px;
+      border-radius: 12px;
+      margin: 20px 0;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    .order-details h3 {
+      color: #2c3e50;
+      margin: 0 0 20px 0;
+      font-size: 22px;
+      border-bottom: 2px solid #dee2e6;
+      padding-bottom: 10px;
+    }
+    
+    .detail-row {
+      display: flex;
+      justify-content: space-between;
+      margin: 12px 0;
+      padding: 10px 0;
+      border-bottom: 1px solid #dee2e6;
+    }
+    
+    .detail-label {
+      font-weight: 600;
+      color: #2c3e50;
+    }
+    
+    .detail-value {
+      color: #34495e;
+      font-weight: 500;
+    }
+    
+    .verification-code {
+      background: #e9ecef;
+      padding: 15px;
+      border-radius: 8px;
+      font-family: monospace;
+      font-size: 18px;
+      letter-spacing: 2px;
+      color: #2c3e50;
+      text-align: center;
+      margin: 10px 0;
+    }
+    
+    .action-required {
+      background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+      color: #856404;
+      padding: 20px;
+      border-radius: 12px;
+      margin: 25px 0;
+      border-left: 5px solid #ffd43b;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+    }
+    
+    .action-required h4 {
+      margin: 0 0 15px 0;
+      display: flex;
+      align-items: center;
+      font-size: 18px;
+    }
+    
+    .action-required h4 span {
+      margin-right: 8px;
+    }
+    
+    .action-required p {
+      margin: 8px 0;
+      line-height: 1.5;
+    }
+
+  table.main(role='presentation' width='100%' cellpadding='0' cellspacing='0')
+    tr
+      td.wrapper
+        table(role='presentation' border='0' cellpadding='0' cellspacing='0' width='100%')
+          tr
+            td
+              .admin-notification
+                .notification-header
+                  h1 🔔 New Order Alert
+                  p A new order has been placed on Cropify
+                
+                .product-card
+                  img.product-image(src=`${booking.crop.image}`, alt=booking.crop.name)
+                  .product-info
+                    .product-name #{booking.crop.name}
+                    p.detail-value ₹#{booking.price}
+                
+                .customer-info
+                  h3 Customer Information
+                  .detail-row
+                    span.detail-label Name:
+                    span.detail-value #{customerName}
+                  .detail-row
+                    span.detail-label Email:
+                    span.detail-value #{customerEmail}
+                
+                .order-details
+                  h3 Order Details
+                  .detail-row
+                    span.detail-label Order ID:
+                    span.detail-value #{booking._id}
+                  .detail-row
+                    span.detail-label Product:
+                    span.detail-value #{booking.crop.name}
+                  .detail-row
+                    span.detail-label Amount:
+                    span.detail-value ₹#{booking.price}
+                  .detail-row
+                    span.detail-label Date:
+                    span.detail-value #{new Date(booking.createdAt).toLocaleString()}
+                  .detail-row
+                    span.detail-label Verification Code:
+                    .verification-code #{verificationCode}
+                
+                .action-required
+                  h4
+                    span 🚨
+                    | Action Required
+                  p Please process this order and arrange for delivery.
+                  p Verify that the customer presents this verification code during delivery: 
+                    strong #{verificationCode}
+                  p Ensure all product details and delivery instructions are properly documented. 

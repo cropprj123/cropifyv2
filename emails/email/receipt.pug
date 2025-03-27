@@ -1,0 +1,165 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1.0")
+    title Thank You for Your Purchase
+    style.
+      body {
+          font-family: 'Segoe UI', Arial, sans-serif;
+          margin: 0;
+          padding: 0;
+          background-color: #f5f5f5;
+          color: #333;
+      }
+      .container {
+          max-width: 600px;
+          margin: 20px auto;
+          background-color: #fff;
+          border-radius: 15px;
+          box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+          overflow: hidden;
+      }
+      header {
+          background: linear-gradient(135deg, #7ada7a 0%, #5dc25d 100%);
+          color: #fff;
+          padding: 25px;
+          text-align: center;
+          position: relative;
+      }
+      .logo-container {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          margin-bottom: 15px;
+      }
+      .logo {
+          width: 90px;
+          height: 90px;
+          border-radius: 50%;
+          overflow: hidden;
+          margin-right: 15px;
+          border: 3px solid #fff;
+          box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      }
+      .logo img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+      }
+      .logo-text {
+          font-size: 24px;
+          text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+      }
+      .content {
+          padding: 30px;
+          background-color: #fff;
+      }
+      .product-section {
+          display: flex;
+          align-items: center;
+          background: #f9f9f9;
+          border-radius: 12px;
+          padding: 20px;
+          margin: 20px 0;
+          box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+      }
+      .product-image {
+          width: 150px;
+          height: 150px;
+          border-radius: 10px;
+          object-fit: cover;
+          margin-right: 20px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      }
+      .product-details {
+          flex: 1;
+      }
+      .product-name {
+          font-size: 20px;
+          font-weight: bold;
+          margin-bottom: 10px;
+          color: #2c3e50;
+      }
+      .receipt-table {
+          width: 100%;
+          margin-top: 30px;
+          border-collapse: separate;
+          border-spacing: 0 10px;
+      }
+      .receipt-table th,
+      .receipt-table td {
+          padding: 15px;
+          background: #f8f9fa;
+          border: none;
+      }
+      .receipt-table th {
+          background: #7ada7a;
+          color: white;
+          font-weight: 600;
+          text-align: left;
+          border-radius: 8px 0 0 8px;
+      }
+      .receipt-table td {
+          border-radius: 0 8px 8px 0;
+          text-align: right;
+      }
+      .total-section {
+          background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+          color: white;
+          padding: 20px;
+          border-radius: 12px;
+          margin-top: 30px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+      }
+      .total-label {
+          font-size: 20px;
+          font-weight: 600;
+      }
+      .total-amount {
+          font-size: 24px;
+          font-weight: bold;
+      }
+      .timestamp {
+          text-align: center;
+          color: #666;
+          margin-top: 20px;
+          font-size: 14px;
+      }
+
+  body
+    .container
+      header
+        .logo-container
+          .logo
+            img(src="https://res.cloudinary.com/pruthvij/image/upload/v1714304883/g1umtv3zlem7mlk1tbvl.webp", alt="Cropify Logo")
+          .logo-text
+            strong Cropify
+      .content
+        h2 Thank you for your purchase, #{firstName}!
+        
+        .product-section
+          img.product-image(src=`${booking.crop.image}`, alt=booking.crop.name)
+          .product-details
+            .product-name #{booking.crop.name}
+            p Your order has been confirmed and will be delivered soon.
+        
+        table.receipt-table
+          tr
+            th Product
+            td #{booking.crop.name}
+          tr
+            th Price
+            td ₹#{booking.price}
+          tr
+            th Payment Method
+            td Online Payment
+        
+        .total-section
+          span.total-label Total Amount:
+          span.total-amount ₹#{booking.price}
+        
+        .timestamp
+          p Order Date: #{new Date(booking.createdAt).toLocaleString()}
