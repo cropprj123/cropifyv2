@@ -13,7 +13,8 @@ import {
 import { PhotoCamera, LocationOn } from '@mui/icons-material';
 import * as maptilersdk from '@maptiler/sdk';
 import "@maptiler/sdk/dist/maptiler-sdk.css";
-import NearbyDiseases from './NearbyDiseases';
+// import NearbyDiseases from './NearbyDiseases';
+import { useNavigate } from 'react-router-dom'; // Add this import
 
 const MapWithLocation = ({ location }) => {
   const mapContainer = useRef(null);
@@ -24,7 +25,8 @@ const MapWithLocation = ({ location }) => {
 
     if (!location) return;
 
-    if (!map.current) {
+    if (!map.current)
+    {
       map.current = new maptilersdk.Map({
         container: mapContainer.current,
         style: maptilersdk.MapStyle.STREETS,
@@ -40,7 +42,8 @@ const MapWithLocation = ({ location }) => {
     }
 
     return () => {
-      if (map.current) {
+      if (map.current)
+      {
         map.current.remove();
       }
     };
@@ -68,9 +71,13 @@ const DiseaseLocationReport = () => {
   const [location, setLocation] = useState(null);
   const [locationError, setLocationError] = useState(null);
 
+
+  const navigate = useNavigate(); // Add this hook
+
   useEffect(() => {
     // Get user's location when component mounts
-    if (navigator.geolocation) {
+    if (navigator.geolocation)
+    {
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setLocation({
@@ -83,14 +90,16 @@ const DiseaseLocationReport = () => {
           console.error('Location Error:', error);
         }
       );
-    } else {
+    } else
+    {
       setLocationError('Geolocation is not supported by your browser.');
     }
   }, []);
 
   const handleFileSelect = (event) => {
     const file = event.target.files[0];
-    if (file) {
+    if (file)
+    {
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
       setError(null);
@@ -99,13 +108,15 @@ const DiseaseLocationReport = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!selectedFile) {
+
+    if (!selectedFile)
+    {
       setError('Please select an image');
       return;
     }
 
-    if (!location) {
+    if (!location)
+    {
       setError('Location data is required. Please enable location services.');
       return;
     }
@@ -119,7 +130,8 @@ const DiseaseLocationReport = () => {
     formData.append('latitude', location.latitude);
     formData.append('longitude', location.longitude);
 
-    try {
+    try
+    {
       const response = await axios.post('/api/v1/farmer-disease-locations', formData, {
         headers: {
           'Content-Type': 'multipart/form-data'
@@ -129,14 +141,16 @@ const DiseaseLocationReport = () => {
       setSuccess(true);
       setSelectedFile(null);
       setPreviewUrl(null);
-      
+
       // Show success message with disease prediction
       const prediction = response.data.data.prediction;
       setSuccess(`Successfully reported ${prediction.disease} with ${(prediction.confidence * 100).toFixed(1)}% confidence`);
-    } catch (error) {
+    } catch (error)
+    {
       console.error('Submission Error:', error);
       setError(error.response?.data?.message || 'Failed to submit disease report');
-    } finally {
+    } finally
+    {
       setLoading(false);
     }
   };
@@ -228,9 +242,17 @@ const DiseaseLocationReport = () => {
           )}
 
           {/* Success Message */}
+
           {success && (
             <Alert severity="success" sx={{ mb: 2 }}>
               {success}
+              <Button
+                variant="outlined"
+                sx={{ ml: 2 }}
+                onClick={() => navigate('/prediction/disease-reports')}
+              >
+                Check Reports
+              </Button>
             </Alert>
           )}
 
@@ -251,8 +273,7 @@ const DiseaseLocationReport = () => {
 
       <Divider sx={{ my: 4 }} />
 
-      {/* Nearby Diseases Section */}
-      <NearbyDiseases />
+
     </Container>
   );
 };

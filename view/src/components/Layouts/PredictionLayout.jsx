@@ -385,6 +385,44 @@ const PredictionLayout = () => {
                   Report Disease Location
                 </span>
               </NavLink>
+              <NavLink
+                to={"/prediction/disease-reports"}
+                className={({ isActive }) =>
+                  `flex items-center py-3 rounded-lg transition-all ${
+                    isActive
+                      ? "bg-green-50 text-green-700 font-medium"
+                      : "text-gray-700 hover:bg-green-50 hover:text-green-700"
+                  } ${isSidebarOpen ? "px-4" : "px-2 justify-center"}`
+                }
+              >
+                <div className={`${isSidebarOpen ? "mr-3" : ""}`}>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    className="h-5 w-5"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                  </svg>
+                </div>
+                <span
+                  className={`text-sm ${isSidebarOpen ? "block" : "hidden"}`}
+                >
+                  Disease Reports
+                </span>
+              </NavLink>
             </nav>
           </div>
         </div>

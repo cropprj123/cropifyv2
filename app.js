@@ -13,6 +13,7 @@ const addtocartRouter = require("./routes/addtocartRoute");
 const chatRouter = require("./routes/chatRoute");
 const aiRouter = require("./routes/aiRoutes");
 const farmerDiseaseLocationRouter = require("./routes/farmerDiseaseLocationRoutes");
+const speechToTextRoute = require("./routes/speechToTextRoute");
 const app = express();
 const cors = require("cors");
 
@@ -63,6 +64,7 @@ app.use("/api/v1/cart", addtocartRouter);
 app.use("/api/v1/ai", chatRouter);
 app.use("/api/v1/ai", aiRouter);
 app.use("/api/v1/farmer-disease-locations", farmerDiseaseLocationRouter);
+app.use("/api/v1/speech-to-text", speechToTextRoute);
 app.all("*", (req, res, next) => {
   next(new AppError(`can't find the ${req.originalUrl} url`));
 });
