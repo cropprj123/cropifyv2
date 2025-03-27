@@ -12,6 +12,7 @@ const StoreRouter = require("./routes/storeRoutes");
 const addtocartRouter = require("./routes/addtocartRoute");
 const chatRouter = require("./routes/chatRoute");
 const aiRouter = require("./routes/aiRoutes");
+const farmerDiseaseLocationRouter = require("./routes/farmerDiseaseLocationRoutes");
 const app = express();
 const cors = require("cors");
 
@@ -48,6 +49,9 @@ app.use(
 //   })
 // );
 
+// Serve static files
+app.use(express.static(path.join(__dirname, 'public')));
+
 app.use("/api/v1/crops", cropRouter);
 app.use("/api/v1/users", userRouter);
 app.use("/api/v1/email", emailRouter);
@@ -58,6 +62,7 @@ app.use("/api/v1/store", StoreRouter);
 app.use("/api/v1/cart", addtocartRouter);
 app.use("/api/v1/ai", chatRouter);
 app.use("/api/v1/ai", aiRouter);
+app.use("/api/v1/farmer-disease-locations", farmerDiseaseLocationRouter);
 app.all("*", (req, res, next) => {
   next(new AppError(`can't find the ${req.originalUrl} url`));
 });

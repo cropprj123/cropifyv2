@@ -46,6 +46,8 @@ import VideoDiseaseDetection from "./pages/Prediction/VideoDiseaseDetection";
 import Forecast from './pages/Forecast';
 import DiseaseChat from "./pages/DiseaseChat";
 import GeneralChat from "./pages/GeneralChat";
+import FarmerLocationPrediction from "./pages/Prediction/FarmerLocationPrediction";
+import DiseaseLocationReport from "./pages/Prediction/DiseaseLocationReport";
 
 function App() {
   const { userData } = useUserData();
@@ -115,6 +117,7 @@ function App() {
                   <Route path="advice" element={<AdvicePrediction />} />
                   <Route path="npk" element={<NpkChart />} />
                   <Route path="models" element={<ModelComparison />} />
+                  <Route path="disease-location" element={<DiseaseLocationReport />} />
                   <Route
                     path="fertilizer"
                     element={<FertilizerPrediction cart={cart} setCart={setCart} />}

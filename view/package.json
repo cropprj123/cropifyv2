@@ -21,6 +21,7 @@
     "@mui/material": "^5.15.15",
     "@mui/x-data-grid": "^7.2.0",
     "@stripe/stripe-js": "^3.3.0",
+    "@turf/turf": "^7.2.0",
     "axios": "^1.6.8",
     "chart.js": "^4.4.2",
     "framer-motion": "^11.1.7",
