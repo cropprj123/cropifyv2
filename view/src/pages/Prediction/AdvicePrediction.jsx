@@ -6,6 +6,7 @@ import { Card, Typography, Divider, Alert } from "@mui/joy";
 
 export default function AdvicePrediction() {
   const [loading, setLoading] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('en');
   const [inputData, setInputData] = useState({
     N: "",
     P: "",
@@ -17,6 +18,17 @@ export default function AdvicePrediction() {
   });
   const [prediction, setPrediction] = useState({});
   const [got2, setGot2] = useState(false);
+
+  const languages = [
+    { code: 'en', name: 'English' },
+    { code: 'mr', name: 'Marathi' },
+    { code: 'hi', name: 'Hindi' },
+    { code: 'gu', name: 'Gujarati' },
+    { code: 'ja', name: 'Japanese' },
+    { code: 'de', name: 'German' },
+    { code: 'fr', name: 'French' },
+    { code: 'es', name: 'Spanish' }
+  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -31,8 +43,13 @@ export default function AdvicePrediction() {
     setLoading(true);
     const { N, P, K, temperature, humidity, pH, rainfall } = inputData;
     
+    // Only add language parameter if it's not English
+    const endpoint = selectedLanguage === 'en'
+      ? '/api/v1/crops/predict'
+      : `/api/v1/crops/predict?lang=${selectedLanguage}`;
+    
     axios
-      .get(`/api/v1/crops/predict`, {
+      .get(endpoint, {
         params: {
           data: [N, P, K, temperature, humidity, pH, rainfall].map(parseFloat),
         },
@@ -171,6 +188,25 @@ export default function AdvicePrediction() {
               onSubmit={handleSubmitSecond}
               className="max-w-3xl mx-auto bg-white rounded-2xl shadow-xl p-8"
             >
+              {/* Language Selector */}
+              <div className="mb-6">
+                <label htmlFor="language" className="block text-sm font-medium text-gray-700 mb-2">
+                  Select Language
+                </label>
+                <select
+                  id="language"
+                  value={selectedLanguage}
+                  onChange={(e) => setSelectedLanguage(e.target.value)}
+                  className="block w-full px-4 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-green-500 focus:border-green-500"
+                >
+                  {languages.map((lang) => (
+                    <option key={lang.code} value={lang.code}>
+                      {lang.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {inputFields.map((field) => (
                   <div key={field.name} className="space-y-2">

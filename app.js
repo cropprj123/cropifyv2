@@ -25,7 +25,7 @@ app.use(express.json());
 app.use(cookieparser());
 app.use(
   cors({
-    origin: ["http://localhost:5174", "http://localhost:5173"],
+    origin: ["http://localhost:5174"],
     credentials: true,
     origin: true,
     optionsSuccessStatus: 200,
@@ -51,7 +51,7 @@ app.use(
 // );
 
 // Serve static files
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/api/v1/crops", cropRouter);
 app.use("/api/v1/users", userRouter);
